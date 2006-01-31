@@ -1,0 +1,173 @@
+NAME
+    FEAR::API - There's no fear with this elegant site scraper
+
+DESCRIPTION
+    FEAR::API is a tool that helps reduce your time creating site scraping
+    scripts and help you do it in an much more elegant way. FEAR::API
+    combines many strong and powerful features from various CPAN modules,
+    such as LWP::UserAgent, WWW::Mechanize, Template::Extract, Encode,
+    HTML::Parser, etc. and digests them into a deeper Zen.
+
+    More documentation will come sooooooner or later.
+
+EXAMPLES
+        use FEAR::API -base;
+
+  Fetch a page and print to STDOUT
+        print fetch("google.com")->document->as_string;
+
+        fetch("google.com");
+        print $$_;    
+
+        fetch("google.com") | _print;
+
+  Fetch a page and save it to a file
+        url("google.com")->() | _save_as("google.html");
+
+  Recursive get web pages from Google
+        url("google.com")->() >> _feedback;
+        &$_ while $_;
+
+  Recursive get web pages from Google
+        url("google.com")->() >> _feedback;
+        $_ | _save_as_tree("./root");
+        $_->() | _save_as_tree("./root") while $_;
+
+  Follow the second link of Google
+        url("google.com")->()->follow_link(n => 2);
+
+  Return links from Google's homepage
+        print Dumper fetch("google.com")->links;
+
+  Submit a query to Google
+        url("google.com")->();
+        submit_form(
+                    form_number => 1,
+                    fields => { q => "Kill Bush" }
+                    );
+
+  Get links of some pattern
+        url("[% FOREACH i = [a..z] %]
+             http://some.site/[% i %]
+             [% END %]");
+        &$_ while $_;
+
+  Deal with links in a web page (I)
+   Minimal
+        url("google.com")->()
+          >> [
+              qr(^http:) => _feedback,
+              qr(google) => \my @l,
+              qr(google) => sub {  print ">>>".$_->[0],$/ }
+             ];
+        $_->() while $_;
+        print Dumper \@l;
+
+   Verbose
+        fetch("http://google.com")
+        ->report_links(
+                       qr(^http:) => _feedback,
+                       qr(google) => \my @l,
+                       qr(google) => sub {  print ">>>".$_->[0],$/ }
+                      );
+        fetch while has_more_urls;
+        print Dumper \@l;
+
+  Deal with links in a web page (II)
+   Minimal
+        url("google.com")->()
+          >> {
+              qr(^http:) => _feedback,
+              qr(google) => \my @l,
+              qr(google) => sub {  print ">>>".$_->[0],$/ }
+             };
+        $_->() while $_;
+        print Dumper \@l;
+
+   Verbose
+        fetch("http://google.com")
+        ->fallthrough_report(1)
+        ->report_links(
+                       qr(^http:) => _feedback,
+                       qr(google) => \my @l,
+                       qr(google) => sub {  print ">>>".$_->[0],$/ }
+                      );
+        fetch while has_more_urls;
+        print Dumper \@l;
+
+  Extraction
+   Extract data from CPAN
+        url("http://search.cpan.org/recent")->();
+        submit_form(
+                form_name => "f",
+                fields => {
+                           query => "perl"
+                          });
+        template("<!--item-->[% p %]<!--end item-->");
+        extract;
+        print Dumper extresult;
+
+   Extract data from CPAN after some HTML cleanup
+        url("http://search.cpan.org/recent")->();
+        submit_form(
+                form_name => "f",
+                fields => {
+                           query => "perl"
+                          });
+        preproc(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s));
+        print document->as_string;    # print content to STDOUT
+        template("<!--item-->[% p %]<!--end item-->");
+        extract;
+        print Dumper extresult;
+
+   HTML cleanup, extract data, and refine results
+        url("http://search.cpan.org/recent")->();
+        submit_form(
+                form_name => "f",
+                fields => {
+                           query => "perl"
+                          });
+        preproc(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s));
+        print $$_;    # print content to STDOUT
+        template("<!--item-->[% rec %]<!--end item-->");
+        extract;
+        postproc(q($_->{rec} =~ s/<.+?>//g));     # Strip HTML tags
+        print Dumper extresult;
+
+   Use filtering syntax
+        fetch("http://search.cpan.org/recent");
+        submit_form(
+                    form_name => "f",
+                    fields => {
+                               query => "perl"
+                    });
+        $_ | _doc_filter(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s))
+           | _template("<!--item-->[% rec %]<!--end item-->")
+           | _result_filter(q($_->{rec} =~ s/<.+?>//g));
+        print Dumper \@$_;
+
+  Preprocess document
+        url("google.com")->()
+        | _preproc(use => "html_to_null")
+        | _preproc(use => "decode_entities")
+        | _print;
+
+  Postprocess extraction results
+        fetch("http://search.cpan.org/recent");
+        submit_form(
+                    form_name => "f",
+                    fields => {
+                               query => "perl"
+                    });
+        $_ | _doc_filter(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s))
+           | _template("<!--item-->[% rec %]<!--end item-->")
+           | _result_filter(use => "html_to_null",    qw(rec));
+           | _result_filter(use => "decode_entities", qw(rec))
+        print Dumper \@$_;
+
+AUTHOR & COPYRIGHT
+    Copyright (C) 2006 by Yung-chung Lin (a.k.a. xern) <xern@cpan.org>
+
+    This library is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself
+

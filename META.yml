@@ -1,0 +1,34 @@
+abstract: An elegant site scraper
+author: Yung-chung Lin <xern@cpan.org>
+build_requires:
+  Test::More: 0
+distribution_type: module
+generated_by: Module::Install version 0.51
+license: perl
+name: FEAR-API
+no_index:
+  directory:
+    - inc
+    - t
+requires:
+  Compress::Zlib: 0
+  DB_File: 0
+  Digest::MD5: 0
+  Email::Find: 0
+  File::MMagic: 0
+  File::Slurp: 0
+  File::Temp: 0
+  HTML::Entities: 0
+  HTML::LinkExtractor: 0
+  IO::String: 0
+  Inline: 0
+  Inline::Files: 0
+  Regexp::Bind: 0
+  Regexp::Common: 0
+  Spiffy: 0
+  Template: 0
+  Template::Extract: 0
+  WWW::Mechanize: 0
+  XML::XPath: 0
+  YAML: 0
+version: 0.452
