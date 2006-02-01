@@ -1,0 +1,397 @@
+----
+presentation_topic: FEAR::API
+presentation_title: FEAR::API - There's no fear with this elegant site scraper
+presentation_place: 
+presentation_date: 
+----
+== 任務
+
+請您抓回某商務網站（例如說是 Amazon.com）
+上所有的網頁內容，並從每一頁中抓出產品的詳細規格，並把每一筆資料存入資料庫裡。
+
+----
+== 我們通常使用什麼工具？
+
+* LWP::Simple
+* LWP::UserAgent
+* WWW::Mechanize
+* Template::Extract
+* Encode
+* ....., etc.
+
+----
+== 範例
+
+           use LWP::Simple;
+           use HTML::LinkExtractor;
+           use Data::Dumper;
+
+           my $input = get("http://google.com");
+           my $LX = new HTML::LinkExtractor();
+
+           $LX->parse(\$input);
+
+           print Dumper($LX->links);
+
++
+
+           # 或是使用 WWW::Mechanize
+           use WWW::Mechanize;
+           use Data::Dumper;
+           my $mech = WWW::Mechanize->new();
+           $mech->get( "http://google.com" );
+           print Dumper $mech->links;
+
+----
+== 範例
+
+
+           use WWW::Mechanize;
+           use Data::Dumper;
+           my $mech = WWW::Mechanize->new();
+           $mech->get( "http://google.com" );
+           my @link;
+           foreach ($mech->links){
+               if($_->[0] =~ /foo/){
+                  $mech->get($_->[0]);
+               }
+               elsif($_->[0] =~ /bar/){
+                  push @link;
+               }
+           }
+           print Dumper \@link;
+
+----
+== 範例
+
+           use LWP::Simple;
+           use Template::Extract;
+           use Data::Dumper;
+           my $obj = Template::Extract->new;
+           print Dumper $obj->extract('[% FOREACH rec %]<a href="[% ... %]">[% link %]</a>[% END %]',
+                                      get("http://google.com"));
+
+
+----
+== 我們需要什麼？
+
+* 一個整合性的模組
+* 使用較少的程式碼
+* 合併取得網頁及抓取資料的工作
+
++/所以 FEAR::API 誕生了！/
+
+----
+== 重寫範例 1
+
+=== Old
+           use WWW::Mechanize;
+           use Data::Dumper;
+           my $mech = WWW::Mechanize->new();
+           $mech->get( "http://google.com" );
+           print Dumper $mech->links;
+
+
++=== New
+
+ use FEAR::API -base;
+ print Dumper fetch("google.com")->links;
+
+----
+== 重寫範例 2
+
+=== Old
+
+           use WWW::Mechanize;
+           use Data::Dumper;
+           my $mech = WWW::Mechanize->new();
+           $mech->get( "http://google.com" );
+           my @link;
+           foreach ($mech->links){
+               if($_->[0] =~ /foo/){
+                  $mech->get($_->[0]);
+               }
+               elsif($_->[0] =~ /bar/){
+                  push @link;
+               }
+           }
+           print Dumper \@link;
+
++=== New
+
+ use FEAR::API -base;
+ fetch("google.com") >> [
+   qr(foo) => _feedback,
+   qr(bar) => \my @link,
+ ];
+ $_->() while $_;
+ print Dumper \@link;
+
+----
+== 重寫範例 3
+
+=== Old
+
+           use LWP::Simple;
+           use Template::Extract;
+           use Data::Dumper;
+           my $obj = Template::Extract->new;
+           print Dumper $obj->extract('[% FOREACH rec %]<a href="[% ... %]">[% link %]</a>[% END %]',
+                                      get("http://google.com"));
++=== New
+
+ use FEAR::API -base;
+ url("google.com")->();
+ extract('[% FOREACH rec %]<a href="[% ... %]">[% link %]</a>[% END %]');
+ print Dumper extresult;
+
+
+----
+== 什麼是 FEAR::API?
+* FEAR::API 代表:
++** Fetch, Extract, Aggregate, and Reorganize
+
+* FEAR::API 可以幫忙您簡化從網站抓資料的過程，盡量讓您用很短的時間，並用最少的程式碼達成相同的需求。
+
++* 特色:
+** 結合了 LWP::Simple, WWW::Mechanize, Template::Extract, Encode 等等的精華
++** 使用了 operator overloading 讓程式碼變的更簡潔
++** 取回的網頁自動轉成 UTF-8
++** 使用 FEAR::API 有點像是使用一個新的 sub-language 不過又具有 perl 的完整支援。
++** 它是一個物件導向的模組
+
++讓我們來看更多範例
+
+----
+== 抓取網頁並取入純量變數
+
+   use FEAR::API -base;
+
+   my $content = fetch("google.com")->document->as_string;
+
+   fetch("google.com") > my $content;
+
+----
+== 抓取網頁並印到 STDOUT
+
+   getprint("google.com");
+
+   print fetch("google.com")->document->as_string;
+
+   fetch("google.com");
+   print $$_;
+
+   fetch("google.com") | _print;
+
+----
+== 抓取網頁並存入檔案
+
+   getstore("google.com");
+
+   url("google.com")->() | _save_as("google.html");
+
+----
+== 跟隨google 首頁上的連結
+
+   url("google.com")->() >> _feedback;
+   &$_ while $_;
+
+----
+== 儲存google 首頁上的連結
+
+    url("google.com")->() >> _feedback;
+    $_ | _save_as_tree("./root");
+    $_->() | _save_as_tree("./root") while $_;
+
+
+----
+== 遞迴的從google 抓取網頁
+
+    url("google.com")->() >> _feedback;
+    &$_ >> _feedback while $_;
+
+----
+== 遞迴的從google 抓取網頁並存入檔案
+
+    url("google.com")->() >> _feedback;
+    $_ | _save_as_tree("./root");
+    while($_){
+      &$_ | _save_as_tree("./root");
+      $_ >> _feedback;
+    }
+
+----
+== 跟隨google 首頁上的第二個連結
+
+    url("google.com")->()->follow_link(n => 2);
+
+----
+== 回傳google 首頁上的連結
+
+    print Dumper fetch("google.com")->links;
+
+----
+== 送出查詢
+
+    url("google.com")->();
+    submit_form(
+                form_number => 1,
+                fields => { q => "Kill Bush" }
+                );
+
+----
+== 抓取有某樣版的連結
+
+    url("[% FOREACH i = ['a'..'z'] %]
+         http://some.site/[% i %]
+         [% END %]");
+    &$_ while $_;
+
+----
+== 處理網頁上的連結 (I)
+
+    url("google.com")->()
+      >> [
+          qr(^http:) => _feedback,
+          qr(google) => \my @l,
+          qr(google) => sub {  print ">>>".$_->[0],$/ }
+         ];
+    $_->() while $_;
+    print Dumper \@l;
+
+----
+== 處理網頁上的連結 (II)
+
+    url("google.com")->()
+      >> {
+          qr(^http:) => _feedback,
+          qr(google) => \my @l,
+          qr(google) => sub {  print ">>>".$_->[0],$/ }
+         };
+    $_->() while $_;
+    print Dumper \@l;
+
+
+----
+== 抓取資料
+
+=== 從 CPAN 上抓出資料
+
+    url("http://search.cpan.org/recent")->();
+    submit_form(
+            form_name => "f",
+            fields => {
+                       query => "perl"
+                      });
+    template("<!--item-->[% p %]<!--end item-->");
+    extract;
+    print Dumper extresult;
+
++=== 清理 HTML 再從 CPAN 上抓出資料
+
+    url("http://search.cpan.org/recent")->();
+    submit_form(
+            form_name => "f",
+            fields => {
+                       query => "perl"
+                      });
+    preproc(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s));
+    print document->as_string;    # print content to STDOUT
+    template("<!--item-->[% p %]<!--end item-->");
+    extract;
+    print Dumper extresult;
+
++=== 清理 HTML, 再從 CPAN 上抓出資料, 並修飾結果
+
+    url("http://search.cpan.org/recent")->();
+    submit_form(
+            form_name => "f",
+            fields => {
+                       query => "perl"
+                      });
+    preproc(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s));
+    print $$_;    # print content to STDOUT
+    template("<!--item-->[% rec %]<!--end item-->");
+    extract;
+    postproc(q($_->{rec} =~ s/<.+?>//g));     # Strip HTML tags
+    print Dumper extresult;
+
+
++=== 使用過濾器的語法
+
+    fetch("http://search.cpan.org/recent");
+    submit_form(
+                form_name => "f",
+                fields => {
+                           query => "perl"
+                });
+    $_ | _doc_filter(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s))
+       | _template("<!--item-->[% rec %]<!--end item-->")
+       | _result_filter(q($_->{rec} =~ s/<.+?>//g));
+    print Dumper \@$_;
+
++=== 呼叫結果處理器
+
+    fetch("http://search.cpan.org/recent");
+    submit_form(
+                form_name => "f",
+                fields => {
+                           query => "perl"
+                });
+    $_ | _doc_filter(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s))
+       | _template("<!--item-->[% rec %]<!--end item-->")
+       | _result_filter(q($_->{rec} =~ s/<.+?>//g));
+    invoke_handler('Data::Dumper');
+
+----
+== 文件前處理
+
+    url("google.com")->()
+    | _preproc(use => "html_to_null")
+    | _preproc(use => "decode_entities")
+    | _print;
+
+----
+== 結果後處理
+
+    fetch("http://search.cpan.org/recent");
+    submit_form(
+                form_name => "f",
+                fields => {
+                           query => "perl"
+                });
+    $_ | _doc_filter(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s))
+       | _template("<!--item-->[% rec %]<!--end item-->")
+       | _result_filter(use => "html_to_null",    qw(rec));
+       | _result_filter(use => "decode_entities", qw(rec))
+    print Dumper \@$_;
+
+----
+== 如果不用 -base
+
+   use FEAR::API;
+   my $f = fear();
+   $f->fetch("blah");
+   # ..., etc.
+
+使用 -base, $_ 會自動設成 FEAR::API 物件。
+
+   use FEAR::API -base;
+   fetch("blah");
+   # ..., etc.
+
+----
+== TO DO
+
+* 和 DBIx::Class, Class::DBI ... 等等的模組結合
+* 程式碼重整及清理
+* 更多測試
+* 補齊文件
+* 發展更多整合性的 method
+
+----
+banner_bgcolor: lightblue
+----
+== 就這樣! :D
+
+* The END

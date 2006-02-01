@@ -1,3 +1,9 @@
 0.452  Tue, 31 Jan 2006 19:46:42 +0800
 
 	- initial release
+
+0.455  Wed, 01 Feb 2006 14:34:05 +0800
+
+	- Add getstore() and getprint()
+	- Add document patch
+	- add zh_TW slides introducing FEAR::API

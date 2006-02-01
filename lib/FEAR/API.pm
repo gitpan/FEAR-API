@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.452';
+our $VERSION = '0.455';
 
 use utf8;
 our @EXPORT
@@ -453,6 +453,7 @@ sub invoke_TT {
     $tt->process(\$input, undef, \$output);
     $output =~ s/^\s+//gmo;
     $output =~ s/\s+$//gmo;
+    $output =~ s(^http://$)()mgo;
 #    print $output;
     $output;
 }
@@ -548,6 +549,17 @@ sub reach_max_fetching_count {
     $self->{max_fetching_count} > 0
 	and
     $self->{fetching_count} == $self->{max_fetching_count}
+}
+
+sub getprint {
+  $self->fetch(shift());
+  print $self->doc->as_string;
+}
+
+sub getstore {
+  croak "Incorrect number of arguments" if not @_ == 2;
+  $self->fetch(shift);
+  $self->save_to_file(shift);
 }
 
 chain_sub fetch {
@@ -1024,9 +1036,17 @@ More documentation will come sooooooner or later.
 =head1 EXAMPLES
 
     use FEAR::API -base;
+    
+=head2 Fetch a page and store it in a scalar
+
+    fetch("google.com") > my $content;
+    
+    my $content = fetch("google.com")->document->as_string;
 
 =head2 Fetch a page and print to STDOUT
 
+    getprint("google.com");
+   
     print fetch("google.com")->document->as_string;
 
     fetch("google.com");
@@ -1037,19 +1057,35 @@ More documentation will come sooooooner or later.
 
 =head2 Fetch a page and save it to a file
 
+    getstore("google.com");
+
     url("google.com")->() | _save_as("google.html");
 
-=head2 Recursive get web pages from Google
+=head2 Follow links in Google's homepage
 
     url("google.com")->() >> _feedback;
     &$_ while $_;
 
-=head2 Recursive get web pages from Google
+=head2 Save links in Google's homepage
 
     url("google.com")->() >> _feedback;
     $_ | _save_as_tree("./root");
     $_->() | _save_as_tree("./root") while $_;
 
+
+=head2 Recursive get web pages from Google
+
+    url("google.com")->() >> _feedback;
+    &$_ >> _feedback while $_;
+
+=head2 Recursive get web pages from Google
+
+    url("google.com")->() >> _feedback;
+    $_ | _save_as_tree("./root");
+    while($_){
+      &$_ | _save_as_tree("./root");
+      $_ >> _feedback;
+    }
 
 =head2 Follow the second link of Google
 
@@ -1069,7 +1105,7 @@ More documentation will come sooooooner or later.
 
 =head2 Get links of some pattern
 
-    url("[% FOREACH i = [a..z] %]
+    url("[% FOREACH i = ['a'..'z'] %]
          http://some.site/[% i %]
          [% END %]");
     &$_ while $_;
