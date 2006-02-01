@@ -7,3 +7,7 @@
 	- Add getstore() and getprint()
 	- Add document patch
 	- add zh_TW slides introducing FEAR::API
+
+0.456  Wed, 01 Feb 2006 17:40:35 +0800
+
+	- Add English slides

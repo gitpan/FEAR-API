@@ -19,6 +19,8 @@ EXAMPLES
         my $content = fetch("google.com")->document->as_string;
 
   Fetch a page and print to STDOUT
+        getprint("google.com");
+   
         print fetch("google.com")->document->as_string;
 
         fetch("google.com");
@@ -40,11 +42,11 @@ EXAMPLES
         $_ | _save_as_tree("./root");
         $_->() | _save_as_tree("./root") while $_;
 
-  Recursive get web pages from Google
+  Recursively get web pages from Google
         url("google.com")->() >> _feedback;
         &$_ >> _feedback while $_;
 
-  Recursive get web pages from Google
+  Recursively get web pages from Google
         url("google.com")->() >> _feedback;
         $_ | _save_as_tree("./root");
         while($_){
@@ -164,6 +166,18 @@ EXAMPLES
            | _template("<!--item-->[% rec %]<!--end item-->")
            | _result_filter(q($_->{rec} =~ s/<.+?>//g));
         print Dumper \@$_;
+
+   Invoke handler for extracted results
+        fetch("http://search.cpan.org/recent");
+        submit_form(
+                    form_name => "f",
+                    fields => {
+                               query => "perl"
+                    });
+        $_ | _doc_filter(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s))
+           | _template("<!--item-->[% rec %]<!--end item-->")
+           | _result_filter(q($_->{rec} =~ s/<.+?>//g));
+        invoke_handler('Data::Dumper');
 
   Preprocess document
         url("google.com")->()

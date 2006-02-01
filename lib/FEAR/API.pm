@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.455';
+our $VERSION = '0.456';
 
 use utf8;
 our @EXPORT
@@ -1073,12 +1073,12 @@ More documentation will come sooooooner or later.
     $_->() | _save_as_tree("./root") while $_;
 
 
-=head2 Recursive get web pages from Google
+=head2 Recursively get web pages from Google
 
     url("google.com")->() >> _feedback;
     &$_ >> _feedback while $_;
 
-=head2 Recursive get web pages from Google
+=head2 Recursively get web pages from Google
 
     url("google.com")->() >> _feedback;
     $_ | _save_as_tree("./root");
@@ -1215,6 +1215,19 @@ More documentation will come sooooooner or later.
        | _template("<!--item-->[% rec %]<!--end item-->")
        | _result_filter(q($_->{rec} =~ s/<.+?>//g));
     print Dumper \@$_;
+
+=head3 Invoke handler for extracted results
+
+    fetch("http://search.cpan.org/recent");
+    submit_form(
+                form_name => "f",
+                fields => {
+                           query => "perl"
+                });
+    $_ | _doc_filter(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s))
+       | _template("<!--item-->[% rec %]<!--end item-->")
+       | _result_filter(q($_->{rec} =~ s/<.+?>//g));
+    invoke_handler('Data::Dumper');
 
 =head2 Preprocess document
 
