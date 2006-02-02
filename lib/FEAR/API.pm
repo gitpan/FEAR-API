@@ -6,33 +6,34 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.456';
+our $VERSION = '0.460';
 
 use utf8;
 our @EXPORT
   =
   (
-  qw(
-     fear
-     @default_query_terms
-     Dumper
-    ),
+   qw(
+      fear
+      @default_query_terms
+      Dumper
+     ),
      qw(
-     _template
-     _preproc
-     _postproc
-     _doc_filter
-     _result_filter
-     _export
-     _foreach
-     _save_as
-     _save_as_tree
-     _keep_links
-     _remove_links
-     _print
-     _feedback
-     _local_links
-    )
+	_template
+	_preproc
+	_postproc
+	_doc_filter
+	_result_filter
+	_export
+	_foreach
+	_foreach_result
+	_save_as
+	_save_as_tree
+	_keep_links
+	_remove_links
+	_print
+	_feedback
+	_local_links
+       )
   );
 
 
@@ -123,9 +124,13 @@ sub ol_dispatch_links {
 
 sub _preproc($;$)     {  [ sub { shift->preproc(@{shift()}) } => \@_ ] }
 alias _doc_filter => '_preproc';
+
 sub _postproc($;$@)    {  [ sub { shift->postproc(@{shift()})} => \@_ ] }
 alias _result_filter => '_postproc';
+
 sub _template($)      {  [ sub { shift->template(@{shift()})->extract } => \@_ ] }
+alias _extract => '_template';
+
 sub _save_as($)       {  [ sub { shift->save_to_file(shift()) } => $_[0] ]      }
 sub _save_as_tree(;$) {  [ sub { shift->save_as_tree(shift()) }=> $_[0] ]      }
 sub _print()            {  [ sub {
@@ -153,13 +158,19 @@ sub _export($$)       {  [ sub {
 			     my $varref = $_[0]->[1];
 			     $varref = $self->{$field};
 			   } => \@_ ] }
-sub _foreach(&@)      {  [ sub {
+sub _foreach_result(&)      {  [ sub {
 			     my $self = shift;
 			     my $sub = $_[0]->[0];
-			     my $aryref = $_[0]->[1];
-			     @$aryref = map{$sub->($_)} @$aryref;
+			     my $aryref = $self->{extresult};
+                             if( ref $self->{extresult} ){
+                                for my $i (0..$#$aryref){
+                                   local $_ = $aryref->[$i];
+                                   &$sub($self);
+                                }
+                             }
 			   },
-			   [ shift(), \@_ ] ]		       }
+			   [ shift() ] ]		       }
+alias foreach => '_foreach_result';
 
 chain_sub ol_filter {
   local $_;
@@ -358,8 +369,11 @@ chain_sub invoke_handler {
     $handler = shift if @_;
     $self->handler($handler) if $handler;
     croak "Please set handler first" if not defined $self->{handler};
-    foreach my $d (@{$self->{extresult}}){
-	$self->{handler}->($d, @_);
+    if(ref $self->{extresult}) {
+      local $_;
+      foreach (@{$self->{extresult}}){
+	&{$self->{handler}}(@_);
+      }
     }
 }
 
@@ -601,6 +615,7 @@ chain_sub fetch {
 	    $wua->content;
 	  };
 
+    print "     [",$wua->title,"]",$/x2 if $wua->title;
     $append_to_document ?
       $self->document->append($d) : $self->document->content($d);
 
@@ -660,6 +675,7 @@ sub _invoke_extractor {
 
 chain_sub extract {
 #    print Dumper $self->{extractor};
+    $self->template(shift) if $_[0];
     return $self unless $self->{template} && $self->document->size; # Do nothing
 #    print "($self->{template})\n";
     if($self->{use_join}){
@@ -1007,6 +1023,8 @@ chain_sub output_template {
 
 
 alias ___ => 'has_more_urls';
+alias has_more_links => 'has_more_urls';
+
 sub has_more_urls { 
     ref($self->{url}) && @{$self->{url}} ?
 	($self->reach_max_fetching_count ? 0 : 1 ) : 0;

@@ -43,7 +43,7 @@ sub filter {
 
   # This is for invoking methods without specifying FEAR::API objects
   s(&know_myself)
-    (q(my $self = ref ($_[0]) ? shift : $_))mego;
+    (q(my $self = ref ($_[0]) =~ /^FEAR::API/o ? shift : $_))mego;
   
 
   # For debugging
