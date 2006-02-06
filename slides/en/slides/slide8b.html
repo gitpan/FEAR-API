@@ -196,7 +196,7 @@ print Dumper \@link;
 <h3>New</h3>
 <pre class="formatter_pre">use FEAR::API -base;
 fetch&#40;&#34;google.com&#34;&#41; &gt;&gt; [
-  qr&#40;foo&#41; =&gt; _feedback,
+  qr&#40;foo&#41; =&gt; _self,
   qr&#40;bar&#41; =&gt; \my @link,
 ];
 $_-&gt;&#40;&#41; while $_;

@@ -121,7 +121,7 @@ presentation_date:
 
  use FEAR::API -base;
  fetch("google.com") >> [
-   qr(foo) => _feedback,
+   qr(foo) => _self,
    qr(bar) => \my @link,
  ];
  $_->() while $_;
@@ -193,13 +193,13 @@ presentation_date:
 ----
 == 跟隨google 首頁上的連結
 
-   url("google.com")->() >> _feedback;
+   url("google.com")->() >> _self;
    &$_ while $_;
 
 ----
 == 儲存google 首頁上的連結
 
-    url("google.com")->() >> _feedback;
+    url("google.com")->() >> _self;
     $_ | _save_as_tree("./root");
     $_->() | _save_as_tree("./root") while $_;
 
@@ -207,17 +207,17 @@ presentation_date:
 ----
 == 遞迴的從google 抓取網頁
 
-    url("google.com")->() >> _feedback;
-    &$_ >> _feedback while $_;
+    url("google.com")->() >> _self;
+    &$_ >> _self while $_;
 
 ----
 == 遞迴的從google 抓取網頁並存入檔案
 
-    url("google.com")->() >> _feedback;
+    url("google.com")->() >> _self;
     $_ | _save_as_tree("./root");
     while($_){
       &$_ | _save_as_tree("./root");
-      $_ >> _feedback;
+      $_ >> _self;
     }
 
 ----
@@ -252,7 +252,7 @@ presentation_date:
 
     url("google.com")->()
       >> [
-          qr(^http:) => _feedback,
+          qr(^http:) => _self,
           qr(google) => \my @l,
           qr(google) => sub {  print ">>>".$_->[0],$/ }
          ];
@@ -264,7 +264,7 @@ presentation_date:
 
     url("google.com")->()
       >> {
-          qr(^http:) => _feedback,
+          qr(^http:) => _self,
           qr(google) => \my @l,
           qr(google) => sub {  print ">>>".$_->[0],$/ }
          };

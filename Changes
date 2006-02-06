@@ -26,4 +26,10 @@
         - $self->extract() can accept template as argument
         - Rewrite _foreach filter
 
- 
+
+0.462  Mon, 06 Feb 2006 14:34:15 +0800
+
+	- dispatch_link operator can accept FEAR::API object now. $_ >> $_
+	- Add alias _self for _feedback for clarity reason.
+	- fix stop-fetching problem if a duplicated url is encountered
+	- s/_feedback/_self/g in slides

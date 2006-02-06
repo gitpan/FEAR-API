@@ -25,7 +25,7 @@ sub extract_title {
 
 
 sub recursive_get {
-  $f >> _feedback;
+  $f >> $f;
   my $cnn = 'http://cnn.com';
   $f += [ $cnn ];
 #  print Dumper $f->{url};

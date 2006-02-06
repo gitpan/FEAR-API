@@ -179,7 +179,7 @@ document.onkeypress = handleKey
 <h2>處理網頁上的連結 (I)</h2>
 <pre class="formatter_pre">url&#40;&#34;google.com&#34;&#41;-&gt;&#40;&#41;
   &gt;&gt; [
-      qr&#40;^http:&#41; =&gt; _feedback,
+      qr&#40;^http:&#41; =&gt; _self,
       qr&#40;google&#41; =&gt; \my @l,
       qr&#40;google&#41; =&gt; sub {  print &#34;&gt;&gt;&gt;&#34;.$_-&gt;[0],$/ }
      ];

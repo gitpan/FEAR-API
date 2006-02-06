@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.460';
+our $VERSION = '0.462';
 
 use utf8;
 our @EXPORT
@@ -32,6 +32,7 @@ our @EXPORT
 	_remove_links
 	_print
 	_feedback
+	_self
 	_local_links
        )
   );
@@ -96,6 +97,7 @@ use overload
   ;
 
 const _feedback => 'feedback';
+const _self => 'feedback';
 const _local_links => '_local_links';
 
 
@@ -116,7 +118,10 @@ sub ol_dispatch_links {
     $self->fallthrough_report(0);
     $self->dispatch_links(@{$_[0]});
   }
-  elsif($_[0] eq _feedback) {
+  elsif(ref($_[0]) eq 'FEAR::API'){
+    push @{$_[0]->{url}}, $self->links;
+  }
+  elsif($_[0] eq _feedback){
     $self->push_all_links();
   }
   $self;
@@ -581,6 +586,7 @@ chain_sub fetch {
 	defined($self->{max_exec_time})
 	and (time() - $self->{initial_timestamp}) > $self->{max_exec_time};
 
+  FETCH:
     my $link = shift @{$self->{url}} || $_[0] || croak "Please input a URL\n";
     $link = FEAR::API::Link->new($link !~ m(^http://) ?
 				 'http://'.$link : $link
@@ -591,7 +597,8 @@ chain_sub fetch {
 
     my $append_to_document = $_[1];
 
-    if($self->reach_max_fetching_count || $self->urlhistory->has($url)){
+    goto FETCH if $url and $self->urlhistory->has($url);
+    if($self->reach_max_fetching_count){
 	$self->document->content(undef);
 	$self->{url} = [];
 	return $self;
@@ -615,7 +622,7 @@ chain_sub fetch {
 	    $wua->content;
 	  };
 
-    print "     [",$wua->title,"]",$/x2 if $wua->title;
+    print "      [",$wua->title,"]",$/ if $wua->title;
     $append_to_document ?
       $self->document->append($d) : $self->document->content($d);
 
@@ -1081,28 +1088,25 @@ More documentation will come sooooooner or later.
 
 =head2 Follow links in Google's homepage
 
-    url("google.com")->() >> _feedback;
+    url("google.com")->() >> _self;
     &$_ while $_;
 
 =head2 Save links in Google's homepage
 
-    url("google.com")->() >> _feedback;
-    $_ | _save_as_tree("./root");
+    (url("google.com")->() >> _self) | _save_as_tree("./root");
     $_->() | _save_as_tree("./root") while $_;
 
 
 =head2 Recursively get web pages from Google
 
-    url("google.com")->() >> _feedback;
-    &$_ >> _feedback while $_;
+    url("google.com")->() >> _self;
+    &$_ >> _self while $_;
 
 =head2 Recursively get web pages from Google
 
-    url("google.com")->() >> _feedback;
-    $_ | _save_as_tree("./root");
+    (url("google.com")->() >> _self) | _save_as_tree("./root");
     while($_){
-      &$_ | _save_as_tree("./root");
-      $_ >> _feedback;
+      (&$_ | _save_as_tree("./root")) >> _self;
     }
 
 =head2 Follow the second link of Google
@@ -1134,7 +1138,7 @@ More documentation will come sooooooner or later.
 
     url("google.com")->()
       >> [
-          qr(^http:) => _feedback,
+          qr(^http:) => _self,
           qr(google) => \my @l,
           qr(google) => sub {  print ">>>".$_->[0],$/ }
          ];
@@ -1145,7 +1149,7 @@ More documentation will come sooooooner or later.
 
     fetch("http://google.com")
     ->report_links(
-                   qr(^http:) => _feedback,
+                   qr(^http:) => _self,
                    qr(google) => \my @l,
                    qr(google) => sub {  print ">>>".$_->[0],$/ }
                   );
@@ -1158,7 +1162,7 @@ More documentation will come sooooooner or later.
 
     url("google.com")->()
       >> {
-          qr(^http:) => _feedback,
+          qr(^http:) => _self,
           qr(google) => \my @l,
           qr(google) => sub {  print ">>>".$_->[0],$/ }
          };
@@ -1170,7 +1174,7 @@ More documentation will come sooooooner or later.
     fetch("http://google.com")
     ->fallthrough_report(1)
     ->report_links(
-                   qr(^http:) => _feedback,
+                   qr(^http:) => _self,
                    qr(google) => \my @l,
                    qr(google) => sub {  print ">>>".$_->[0],$/ }
                   );
