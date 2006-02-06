@@ -190,6 +190,9 @@ presentation_date:
 
    url("google.com")->() | _save_as("google.html");
 
+    use IO::All;
+    fetch("google.com") | io('google.html');
+
 ----
 == 跟隨google 首頁上的連結
 

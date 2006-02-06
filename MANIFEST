@@ -147,6 +147,7 @@ t/fetch_and_append.t
 t/file_mmagic.t
 t/follow_link.t
 t/get_and_post.t
+t/io-all.t
 t/join_results.t
 t/keep_links.t
 t/list_filters.t

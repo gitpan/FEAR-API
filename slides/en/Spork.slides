@@ -193,6 +193,10 @@ spend shorter time and write the least amount of code to come up to the same req
 
    url("google.com")->() | _save_as("google.html");
 
+   use IO::All;
+   fetch("google.com") | io('google.html');
+
+
 ----
 == Follow links in Google's homepage
 

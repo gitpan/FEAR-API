@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.462';
+our $VERSION = '0.463';
 
 use utf8;
 our @EXPORT
@@ -110,16 +110,20 @@ sub ol_decr {
 }
 
 sub ol_dispatch_links {
-  if(ref($_[0]) eq 'HASH'){
-    $self->fallthrough_report(1);
-    $self->dispatch_links(%{$_[0]});
-  }
-  elsif(ref($_[0]) eq 'ARRAY'){
+  my $ref = ref $_[0];
+  if($ref eq 'ARRAY'){
     $self->fallthrough_report(0);
     $self->dispatch_links(@{$_[0]});
   }
-  elsif(ref($_[0]) eq 'FEAR::API'){
+  elsif($ref eq 'HASH'){
+    $self->fallthrough_report(1);
+    $self->dispatch_links(%{$_[0]});
+  }
+  elsif($ref eq 'FEAR::API'){
     push @{$_[0]->{url}}, $self->links;
+  }
+  elsif($ref eq 'IO::All::File'){ # however, this is not about links
+    $_[0]->append($self->document->as_string);
   }
   elsif($_[0] eq _feedback){
     $self->push_all_links();
@@ -203,8 +207,12 @@ sub ol_quote {
 }
 
 chain_sub ol_redirect_to {
-  if(ref($_[0]) eq 'ARRAY'){
+  my $ref = ref $_[0];
+  if($ref eq 'ARRAY'){
     push @{$_[0]}, $self->document->as_string
+  }
+  elsif($ref eq 'IO::All::File'){
+    $_[0]->print($self->document->as_string);
   }
   else {
     $_[0] = $self->document->as_string;
@@ -587,7 +595,7 @@ chain_sub fetch {
 	and (time() - $self->{initial_timestamp}) > $self->{max_exec_time};
 
   FETCH:
-    my $link = shift @{$self->{url}} || $_[0] || croak "Please input a URL\n";
+    my $link = shift @{$self->{url}} || shift(@_) || croak "Please input a URL\n";
     $link = FEAR::API::Link->new($link !~ m(^http://) ?
 				 'http://'.$link : $link
 				) unless ref $link;
@@ -597,7 +605,10 @@ chain_sub fetch {
 
     my $append_to_document = $_[1];
 
-    goto FETCH if $url and $self->urlhistory->has($url);
+    if( $url and $self->urlhistory->has($url) ){
+      print "\n   $url has been visited.\n";
+      goto FETCH;
+    }
     if($self->reach_max_fetching_count){
 	$self->document->content(undef);
 	$self->{url} = [];
@@ -798,7 +809,7 @@ chain_sub report_links {
 	  if($dispatch_table[$i+1] eq _feedback){
 	    print "   Feed back [".$item->text."] ".$item->url."\n";
 	    push @{$self->{url}}, $item;
-	  }
+	    }
 	  elsif($dispatch_table[$i+1] eq 'Data::Dumper'){
 	    print Dumper $item;
 	  }
@@ -816,8 +827,9 @@ chain_sub report_links {
 	}
       }
     }
-#    print "Remove fetched links\n";
+    #    print "Remove fetched links\n";
     $self->remove_fetched_links;
+
 }
 
 
@@ -1085,6 +1097,9 @@ More documentation will come sooooooner or later.
     getstore("google.com");
 
     url("google.com")->() | _save_as("google.html");
+    
+    use IO::All;
+    fetch("google.com") | io('google.html');
 
 =head2 Follow links in Google's homepage
 
@@ -1232,8 +1247,8 @@ More documentation will come sooooooner or later.
                 form_name => "f",
                 fields => {
                            query => "perl"
-                });
-    $_ | _doc_filter(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s))
+                })
+       | _doc_filter(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s))
        | _template("<!--item-->[% rec %]<!--end item-->")
        | _result_filter(q($_->{rec} =~ s/<.+?>//g));
     print Dumper \@$_;
@@ -1245,8 +1260,8 @@ More documentation will come sooooooner or later.
                 form_name => "f",
                 fields => {
                            query => "perl"
-                });
-    $_ | _doc_filter(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s))
+                })
+       | _doc_filter(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s))
        | _template("<!--item-->[% rec %]<!--end item-->")
        | _result_filter(q($_->{rec} =~ s/<.+?>//g));
     invoke_handler('Data::Dumper');
@@ -1265,8 +1280,8 @@ More documentation will come sooooooner or later.
                 form_name => "f",
                 fields => {
                            query => "perl"
-                });
-    $_ | _doc_filter(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s))
+                })
+       | _doc_filter(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s))
        | _template("<!--item-->[% rec %]<!--end item-->")
        | _result_filter(use => "html_to_null",    qw(rec));
        | _result_filter(use => "decode_entities", qw(rec))

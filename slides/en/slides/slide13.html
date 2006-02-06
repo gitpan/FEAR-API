@@ -180,6 +180,9 @@ document.onkeypress = handleKey
 <pre class="formatter_pre">getstore&#40;&#34;google.com&#34;&#41;;
 
 url&#40;&#34;google.com&#34;&#41;-&gt;&#40;&#41; | _save_as&#40;&#34;google.html&#34;&#41;;
+
+use IO::All;
+fetch&#40;&#34;google.com&#34;&#41; | io&#40;&#39;google.html&#39;&#41;;
 </pre>
 
 </div>

@@ -33,3 +33,9 @@
 	- Add alias _self for _feedback for clarity reason.
 	- fix stop-fetching problem if a duplicated url is encountered
 	- s/_feedback/_self/g in slides
+
+0.463  Mon, 06 Feb 2006 15:30:55 +0800
+
+	- Support for $_ > io('file');
+	- Support for $_ >> io('file');
+	- Slides update
