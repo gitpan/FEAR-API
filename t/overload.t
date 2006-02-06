@@ -20,7 +20,12 @@ sub extract_title {
 	;
 #  print Dumper \@$f;
   like($f->[0]{url}, qr'ftp');
-  like($f->[0]{title}, qr'CBB');
+  like($f->[0]{title}, qr'CBB', 'title test');
+  $f  | _preproc ( 's/BBC/CBB/sig')
+      | '<title>[% title %]</title>'
+      | _postproc( '$_->{url} =~ s/http/ftp/')
+	;
+  like($f->[0]{title}, qr'CBB', 'title test');
 }
 
 

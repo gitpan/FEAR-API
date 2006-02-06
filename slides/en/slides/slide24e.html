@@ -235,7 +235,7 @@ submit_form&#40;
                        query =&gt; &#34;perl&#34;
             }&#41;;
 $_ | _doc_filter&#40;q&#40;s/\A.+&lt;!--results--&gt;&#40;.+&#41;&lt;!--end results--&gt;.+\Z/$1/s&#41;&#41;
-   | _template&#40;&#34;&lt;!--item--&gt;[% rec %]&lt;!--end item--&gt;&#34;&#41;
+   | &#34;&lt;!--item--&gt;[% rec %]&lt;!--end item--&gt;&#34;
    | _result_filter&#40;q&#40;$_-&gt;{rec} =~ s/&lt;.+?&gt;//g&#41;&#41;;
 invoke_handler&#40;&#39;Data::Dumper&#39;&#41;;
 </pre>

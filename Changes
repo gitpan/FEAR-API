@@ -39,3 +39,9 @@
 	- Support for $_ > io('file');
 	- Support for $_ >> io('file');
 	- Slides update
+
+0.464  Mon, 06 Feb 2006 20:44:18 +0800
+
+	- Plain string in filtering syntax now acts as _template()
+	- Fix dependencies in Makefile.PL
+ 

@@ -342,7 +342,7 @@ presentation_date:
                            query => "perl"
                 });
     $_ | _doc_filter(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s))
-       | _template("<!--item-->[% rec %]<!--end item-->")
+       | "<!--item-->[% rec %]<!--end item-->"
        | _result_filter(q($_->{rec} =~ s/<.+?>//g));
     invoke_handler('Data::Dumper');
 

@@ -18,8 +18,10 @@ requires:
   File::MMagic: 0
   File::Slurp: 0
   File::Temp: 0
+  HTML::Encoding: 0
   HTML::Entities: 0
   HTML::LinkExtractor: 0
+  IO::All: 0
   IO::String: 0
   Inline: 0
   Inline::Files: 0
@@ -31,4 +33,4 @@ requires:
   WWW::Mechanize: 0
   XML::XPath: 0
   YAML: 0
-version: 0.463
+version: 0.464

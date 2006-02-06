@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.463';
+our $VERSION = '0.464';
 
 use utf8;
 our @EXPORT
@@ -168,26 +168,32 @@ sub _export($$)       {  [ sub {
 			     $varref = $self->{$field};
 			   } => \@_ ] }
 sub _foreach_result(&)      {  [ sub {
-			     my $self = shift;
-			     my $sub = $_[0]->[0];
-			     my $aryref = $self->{extresult};
-                             if( ref $self->{extresult} ){
-                                for my $i (0..$#$aryref){
-                                   local $_ = $aryref->[$i];
-                                   &$sub($self);
-                                }
-                             }
-			   },
-			   [ shift() ] ]		       }
+				   my $self = shift;
+				   my $sub = $_[0]->[0];
+				   my $aryref = $self->{extresult};
+				   if( ref $self->{extresult} ){
+				     for my $i (0..$#$aryref){
+				       local $_ = $aryref->[$i];
+				       &$sub($self);
+				     }
+				   }
+				 },
+				 [ shift() ] ]
+			     }
 alias foreach => '_foreach_result';
 
 chain_sub ol_filter {
   local $_;
-  my $method = $_[0]->[0];
-  my $arg = $_[0]->[1];
-#  print "$method ($arg)\n";
+  if(ref($_[0]) eq 'ARRAY'){
+    my $method = $_[0]->[0];
+    my $arg = $_[0]->[1];
+    #  print "$method ($arg)\n";
 
-  $method->($self, $arg);
+    $method->($self, $arg);
+  }
+  else {
+    $self->template($_[0])->extract;
+  }
 }
 
 sub ol_subref {
@@ -1262,7 +1268,7 @@ More documentation will come sooooooner or later.
                            query => "perl"
                 })
        | _doc_filter(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s))
-       | _template("<!--item-->[% rec %]<!--end item-->")
+       | "<!--item-->[% rec %]<!--end item-->"
        | _result_filter(q($_->{rec} =~ s/<.+?>//g));
     invoke_handler('Data::Dumper');
 
