@@ -13,6 +13,7 @@ requires  ('Email::Find');
 requires  ('File::MMagic');
 requires  ('File::Slurp');
 requires  ('File::Temp');
+requires  ('Filter::Simple');
 requires  ('HTML::Encoding');
 requires  ('HTML::Entities');
 requires  ('HTML::LinkExtractor');

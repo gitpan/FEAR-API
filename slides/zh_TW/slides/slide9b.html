@@ -188,7 +188,7 @@ print Dumper $obj-&gt;extract&#40;&#39;[% FOREACH rec %]&lt;a href=&#34;[% ... %
 <h3>New</h3>
 <pre class="formatter_pre">use FEAR::API -base;
 url&#40;&#34;google.com&#34;&#41;-&gt;&#40;&#41;;
-extract&#40;&#39;[% FOREACH rec %]&lt;a href=&#34;[% ... %]&#34;&gt;[% link %]&lt;/a&gt;[% END %]&#39;&#41;;
+extract&#40;&#39;&lt;a href=&#34;[% ... %]&#34;&gt;[% link %]&lt;/a&gt;&#39;&#41;;
 print Dumper extresult;
 </pre>
 

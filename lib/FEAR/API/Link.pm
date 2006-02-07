@@ -1,19 +1,10 @@
-package FEAR::API::Link;
-use strict;
-no warnings 'redefine';
-use Spiffy -base;
-use WWW::Mechanize::Link;
-our @ISA = qw(WWW::Mechanize::Link);
-
-
 package WWW::Mechanize::Link;
-
 use strict;
 no warnings 'redefine';
 use FEAR::API::SourceFilter;
+require WWW::Mechanize::Link;
 
-sub new;
-sub new{
+sub new() {
     my $class = shift;
     my %p;
     my ($url,$text,$name,$tag,$base,$attrs,$referer);
@@ -39,12 +30,14 @@ sub new{
     return $self;
 }
 
-sub referer {
+sub referer() {
+  my $self = shift;
   $self->[6] = shift if @_;
   $self->[6];
 }
 
-sub is_local_link {
+sub is_local_link() {
+  my $self = shift;
   my $base = $self->base->as_string;
   $self->url =~ m(^\w+://\Q$base\E);
 }

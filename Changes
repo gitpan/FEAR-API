@@ -44,4 +44,8 @@
 
 	- Plain string in filtering syntax now acts as _template()
 	- Fix dependencies in Makefile.PL
- 
+
+0.465  Tue, 07 Feb 2006 11:02:30 +0800
+
+	- Fix dependencies in Makefile.PL
+	- Fix recursive fetching bug

@@ -143,7 +143,7 @@ database.
 
  use FEAR::API -base;
  url("google.com")->();
- extract('[% FOREACH rec %]<a href="[% ... %]">[% link %]</a>[% END %]');
+ extract('<a href="[% ... %]">[% link %]</a>');
  print Dumper extresult;
 
 

@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.464';
+our $VERSION = '0.465';
 
 use utf8;
 our @EXPORT
@@ -602,12 +602,13 @@ chain_sub fetch {
 
   FETCH:
     my $link = shift @{$self->{url}} || shift(@_) || croak "Please input a URL\n";
-    $link = FEAR::API::Link->new($link !~ m(^http://) ?
-				 'http://'.$link : $link
-				) unless ref $link;
+    $link = WWW::Mechanize::Link->new($link !~ m(^http://) ?
+				      'http://'.$link : $link
+				     ) unless ref $link;
 #    print Dumper $link;
     my $url = $link->url;
     my $referer = $link->referer || $self->value('referer');
+
 
     my $append_to_document = $_[1];
 
@@ -635,7 +636,7 @@ chain_sub fetch {
 	  do {
 	    $wua->add_header(Referer => $referer) if $referer;
 	    $wua->get_content($url);
-	    $wua->delete_header('Referer');
+	    $wua->delete_header('Referer') if $referer;
 	    $wua->content;
 	  };
 
