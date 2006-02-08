@@ -49,3 +49,10 @@
 
 	- Fix dependencies in Makefile.PL
 	- Fix recursive fetching bug
+
+0.466  Wed, 08 Feb 2006 13:54:05 +0800
+
+	- Tidy up report_links()
+	- s/$self->{current_url}/$self->current_url/ in absolutize_url
+	- Fix invoke_handler()'s bug that it didn't product results.
+

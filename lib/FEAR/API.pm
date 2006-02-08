@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.465';
+our $VERSION = '0.466';
 
 use utf8;
 our @EXPORT
@@ -391,7 +391,7 @@ chain_sub invoke_handler {
     if(ref $self->{extresult}) {
       local $_;
       foreach (@{$self->{extresult}}){
-	&{$self->{handler}}(@_);
+	&{$self->{handler}}($_, @_);
       }
     }
 }
@@ -811,24 +811,24 @@ chain_sub report_links {
 
     foreach my $item ($self->links){
       for (my $i= 0; $i<$#dispatch_table; $i+=2){
-	if($item->url =~ m($dispatch_table[$i]) &&
-	   !$self->urlhistory->has($item->url) ){
-	  if($dispatch_table[$i+1] eq _feedback){
+	my ($pattern, $action) = @dispatch_table[$i, $i+1];
+	if($item->url =~ m($pattern) && !$self->urlhistory->has($item->url) ){
+	  if($action eq _feedback){
 	    print "   Feed back [".$item->text."] ".$item->url."\n";
 	    push @{$self->{url}}, $item;
-	    }
-	  elsif($dispatch_table[$i+1] eq 'Data::Dumper'){
+	  }
+	  elsif($action eq 'Data::Dumper'){
 	    print Dumper $item;
 	  }
-	  elsif(ref($dispatch_table[$i+1]) eq 'ARRAY'){
-	    push @{$dispatch_table[$i+1]}, $item;
+	  elsif(ref $action eq 'ARRAY'){
+	    push @{$action}, $item;
 	  }
-	  elsif(ref($dispatch_table[$i+1]) eq 'HASH'){
-	    $dispatch_table[$i+1]->{$item} = 1;
+	  elsif(ref $action eq 'HASH'){
+	    $action->{$item} = 1;
 	  }
-	  elsif(ref($dispatch_table[$i+1]) eq 'CODE'){
+	  elsif(ref $action eq 'CODE'){
 	    local $_ = $item;
-	    &{$dispatch_table[$i+1]};
+	    &{$action};
 	  }
 	  last if not $self->{fallthrough_report};
 	}
@@ -871,7 +871,7 @@ chain_sub absolutize_url {
 		$r->{$field} !~ /^(?:\w+):/o ){
 		$r->{$field} =
 		    URI::WithBase
-		    ->new($r->{$field}, $self->{current_url})
+		    ->new($r->{$field}, $self->current_url)
 		    ->abs
 		    ->as_string;
 	    }

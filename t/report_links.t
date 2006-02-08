@@ -4,17 +4,17 @@ use strict;
 use FEAR::API -base;
 
 my @l;
-url('http://google.com')
-  ->()
-  ->fallthrough_report(1)
-  ->report_links(
-		 qr() => _feedback,
-		 qr() => \@l,
-		 qr() => sub {  ok '>>>'.Dumper($_) }
-		);
+url('http://google.com')->();
+fallthrough_report(1);
+report_links(
+	 qr() => _feedback,
+	 qr() => \@l,
+	 qr() => sub {  ok '>>>'.Dumper($_) }
+	);
 #print Dumper \@l;
 ok(@l);
-while( $_->has_more_urls ){
-	$_->();
-	ok(doc->as_string);
+ok(@{$_->{url}});
+while( has_more_urls ){
+  fetch;
+  ok(doc->as_string);
 }
