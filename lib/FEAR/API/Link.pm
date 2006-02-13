@@ -22,7 +22,6 @@ sub new() {
     else {
         ($url,$text,$name,$tag,$base,$attrs,$referer) = @_; 
     }
-
     my $self = [$url,$text,$name,$tag,$base,$attrs,$referer];
 
     bless $self, $class;

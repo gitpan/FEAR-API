@@ -26,6 +26,8 @@ sub get_content {
   $self->get($url);
   if( $self->res->is_success ){
     $self->_convert_to_utf8;
+    # Since document is translated to UTF-8, so links MUST be re-extracted
+    $self->_extract_links();
     return $self->content;
   }
 }

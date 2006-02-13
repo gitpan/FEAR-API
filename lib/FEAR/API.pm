@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.466';
+our $VERSION = '0.467';
 
 use utf8;
 our @EXPORT
@@ -65,6 +65,7 @@ use File::Slurp;
 use File::Spec::Functions qw(catfile splitpath);
 use Inline::Files::Virtual;
 use List::Util;
+use Storable qw(dclone freeze thaw);
 use Switch;
 use Template;
 use URI;
@@ -281,6 +282,8 @@ sub import() {
 #================================================================================
 # Configuration variables
 #================================================================================
+$Storable::Deparse = 1;
+$Storable::Eval = 1;
 
 my $urlhistory = FEAR::API::URLPool->new;
 
@@ -600,8 +603,9 @@ chain_sub fetch {
 	defined($self->{max_exec_time})
 	and (time() - $self->{initial_timestamp}) > $self->{max_exec_time};
 
+    print Dumper $self->{url}->[0];
   FETCH:
-    my $link = shift @{$self->{url}} || shift(@_) || croak "Please input a URL\n";
+    my $link = shift(@_) || shift @{$self->{url}} || croak "Please input a URL\n";
     $link = WWW::Mechanize::Link->new($link !~ m(^http://) ?
 				      'http://'.$link : $link
 				     ) unless ref $link;
@@ -673,11 +677,12 @@ chain_sub stop_join {
 }
 
 chain_sub push_document {
-    push @{$self->{document_stack}}, $self->{document};
+    push @{$self->{document_stack}}, [ freeze($self->{wua}), $self->{document} ];
 }
 
 chain_sub pop_document {
-    $self->{document} = pop @{$self->{document_stack}};
+    ($self->{wua}, $self->{document}) = @{pop @{$self->{document_stack}}};
+    $self->{wua} = thaw $self->{wua};
 }
 
 sub _invoke_extractor {
@@ -755,25 +760,25 @@ chain_sub keep_results {
 chain_sub follow_link {
   my $link = $self->wua->find_link(@_);
 #  print Dumper $link;
-  $self->url($link)->();
-}
-
-chain_sub back {
-  $self->wua->back();
-  $self->sync_document;
+  $self->fetch($link) if $link;
 }
 
 chain_sub try_follow_link {
-  $self
-    ->push_document
-      ->follow_link(@_)
-	;
+  $self->push_document;
+  $self->follow_link(@_);
+
   if(not $self->wua->success){
     $self->pop_document;
   }
   else {
     shift @{$self->{document_stack}} # discard the pushed document if success
   }
+}
+
+
+chain_sub back {
+  $self->wua->back();
+  $self->sync_document;
 }
 
 chain_sub flatten {
@@ -803,6 +808,17 @@ chain_sub keep_links {
 
 chain_sub remove_links {
   $self->wua->remove_links(@_);
+}
+
+sub uniq {
+    my $aryref = shift;
+    my %h;
+    @$aryref = grep{!$h{
+	ref $_ eq 'HASH' ? %$_ :
+        ref $_ eq 'ARRAY' ? @$_ :
+	ref $_ eq 'SCALAR' ? $$_ :
+        $_
+	}++} @$aryref;
 }
 
 alias dispatch_links => 'report_links';
@@ -836,7 +852,7 @@ chain_sub report_links {
     }
     #    print "Remove fetched links\n";
     $self->remove_fetched_links;
-
+    $self->uniq($self->{url});
 }
 
 

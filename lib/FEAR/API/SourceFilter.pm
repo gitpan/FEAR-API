@@ -10,7 +10,7 @@ sub filter {
   s/\A\n+//o;
   s/^/our \@EXPORT_BASE;\n/;
 
-  # A chain_sub is a subroutine that returns
+  # A chain_sub is a method that returns
   # itself after its function is done.
   s[^chain_sub\s+(\w+\s*\{)(.*?)^\}]
     [sub $1\n $2    ;\$self\n}]msg;

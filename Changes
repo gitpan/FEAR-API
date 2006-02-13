@@ -56,3 +56,13 @@
 	- s/$self->{current_url}/$self->current_url/ in absolutize_url
 	- Fix invoke_handler()'s bug that it didn't product results.
 
+
+0.467  Mon, 13 Feb 2006 11:26:27 +0800
+
+	- Working on try_follow_links's bug
+	- Add uniq()
+	- push_document() pushes $self->{wua} too
+	- Fix the bug that links are not in UTF-8
+
+
+
