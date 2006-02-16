@@ -1,12 +1,12 @@
 #line 1 "inc/Module/AutoInstall.pm - /usr/local/share/perl/5.8.7/Module/AutoInstall.pm"
 package Module::AutoInstall;
-$Module::AutoInstall::VERSION = '1.01';
+$Module::AutoInstall::VERSION = '1.00';
 
 use strict;
 use Cwd                 ();
 use ExtUtils::MakeMaker ();
 
-#line 216
+#line 221
 
 # special map on pre-defined feature sets
 my %FeatureMap = (
@@ -327,8 +327,12 @@ sub _install_cpanplus {
     my $cp   = CPANPLUS::Backend->new;
     my $conf = $cp->configure_object;
 
-    return unless $conf->can('conf') # 0.05x+ with "sudo" support
-               or _can_write($conf->_get_build('base'));  # 0.04x
+    return
+      unless _can_write(
+          $conf->can('conf')
+        ? $conf->get_conf('base')      # 0.05x+
+        : $conf->_get_build('base')    # 0.04x
+      );
 
     # if we're root, set UNINST=1 to avoid trouble unless user asked for it.
     my $makeflags = $conf->get_conf('makeflags') || '';
@@ -402,11 +406,9 @@ sub _install_cpan {
     CPAN::Config->load;
     require Config;
 
-    if (CPAN->VERSION < 1.80) {
-        # no "sudo" support, probe for writableness
-        return unless _can_write( MM->catfile( $CPAN::Config->{cpan_home}, 'sources' ) )
-                  and _can_write( $Config::Config{sitelib} );
-    }
+    return
+      unless _can_write( MM->catfile( $CPAN::Config->{cpan_home}, 'sources' ) )
+      and _can_write( $Config::Config{sitelib} );
 
     # if we're root, set UNINST=1 to avoid trouble unless user asked for it.
     my $makeflags = $CPAN::Config->{make_install_arg} || '';
@@ -713,4 +715,4 @@ installdeps ::
 
 __END__
 
-#line 943
+#line 951

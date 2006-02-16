@@ -64,5 +64,7 @@
 	- push_document() pushes $self->{wua} too
 	- Fix the bug that links are not in UTF-8
 
+0.468  Thu, 16 Feb 2006 15:49:00 +0800
 
-
+	- Add response(), and alias 'res' and 'resp'
+	- Add find_link()

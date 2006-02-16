@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.467';
+our $VERSION = '0.468';
 
 use utf8;
 our @EXPORT
@@ -603,7 +603,7 @@ chain_sub fetch {
 	defined($self->{max_exec_time})
 	and (time() - $self->{initial_timestamp}) > $self->{max_exec_time};
 
-    print Dumper $self->{url}->[0];
+#    print Dumper $self->{url}->[0];
   FETCH:
     my $link = shift(@_) || shift @{$self->{url}} || croak "Please input a URL\n";
     $link = WWW::Mechanize::Link->new($link !~ m(^http://) ?
@@ -757,6 +757,10 @@ chain_sub keep_results {
   }
 }
 
+sub find_link {
+  $self->wua->find_link(@_);
+}
+
 chain_sub follow_link {
   my $link = $self->wua->find_link(@_);
 #  print Dumper $link;
@@ -764,14 +768,16 @@ chain_sub follow_link {
 }
 
 chain_sub try_follow_link {
-  $self->push_document;
-  $self->follow_link(@_);
+  if($self->find_link(@_)){
+    $self->push_document;
+    $self->follow_link(@_);
 
-  if(not $self->wua->success){
-    $self->pop_document;
-  }
-  else {
-    shift @{$self->{document_stack}} # discard the pushed document if success
+    if(not $self->wua->success){
+      $self->pop_document;
+    }
+    else {
+      shift @{$self->{document_stack}} # discard the pushed document if success
+    }
   }
 }
 
@@ -830,8 +836,11 @@ chain_sub report_links {
 	my ($pattern, $action) = @dispatch_table[$i, $i+1];
 	if($item->url =~ m($pattern) && !$self->urlhistory->has($item->url) ){
 	  if($action eq _feedback){
-	    print "   Feed back [".$item->text."] ".$item->url."\n";
-	    push @{$self->{url}}, $item;
+	    if(!$self->value('allow_duplicate') &&
+	       !$self->urlhistory->has($item->url)){
+	      print "   Feed back [".$item->text."] ".$item->url."\n";
+	      push @{$self->{url}}, $item;
+	    }
 	  }
 	  elsif($action eq 'Data::Dumper'){
 	    print Dumper $item;
@@ -974,6 +983,12 @@ chain_sub clear_urlhistory {
 #================================================================================
 # Delegates for LWP::UserAgent object ($self->wua)
 #================================================================================
+alias res => 'response';
+alias resp => 'response';
+sub response {
+  $self->wua->response;
+}
+
 sub _process_ua_resp {
     return $self if $self->reach_max_fetching_count;
 
