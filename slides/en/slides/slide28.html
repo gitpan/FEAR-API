@@ -3,7 +3,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>TO DO</title>
+<title>If you don't use with -base</title>
 <meta name="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="Spork v0.20" />
 <link rel='icon' href='favicon.png' />
@@ -176,15 +176,20 @@ document.onkeypress = handleKey
 <div id="content">
 <div class="top_spacer"></div>
 
-<h2>TO DO</h2>
-<ul>
-<li>Integrate with DBIx::Class, Class::DBI, etc.</li>
-<li>Code refactoring and cleaning</li>
-<li>Add more tests</li>
-<li>Patch documents</li>
-<li>Develop more methods</li>
-</ul>
+<h2>If you don't use with -base</h2>
+<pre class="formatter_pre">use FEAR::API;
+my $f = fear&#40;&#41;;
+$f-&gt;fetch&#40;&#34;blah&#34;&#41;;
+# ..., etc.
+</pre>
+<p>
+Use with -base, and $_ will be set to FEAR::API.
 
+</p>
+<pre class="formatter_pre">use FEAR::API -base;
+fetch&#40;&#34;blah&#34;&#41;;
+# ..., etc.
+</pre>
 
 </div>
 <!-- BEGIN bottom -->

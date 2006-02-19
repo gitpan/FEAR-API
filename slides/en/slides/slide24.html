@@ -3,7 +3,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>Extraction</title>
+<title>Get pages in parallel</title>
 <meta name="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="Spork v0.20" />
 <link rel='icon' href='favicon.png' />
@@ -107,11 +107,11 @@ small {
 <script type="text/javascript">
 // BEGIN controls.js
 function nextSlide() {
-    window.location = 'slide24e.html#end';
+    window.location = 'slide25a.html';
 }
 
 function prevSlide() {
-    window.location = 'slide24c.html#end';
+    window.location = 'slide23.html';
 }
 
 function indexSlide() {
@@ -176,58 +176,13 @@ document.onkeypress = handleKey
 <div id="content">
 <div class="top_spacer"></div>
 
-<h2>Extraction</h2>
-<h3>Extract data from CPAN</h3>
-<pre class="formatter_pre">url&#40;&#34;http://search.cpan.org/recent&#34;&#41;-&gt;&#40;&#41;;
-submit_form&#40;
-        form_name =&gt; &#34;f&#34;,
-        fields =&gt; {
-                   query =&gt; &#34;perl&#34;
-                  }&#41;;
-template&#40;&#34;&lt;!--item--&gt;[% p %]&lt;!--end item--&gt;&#34;&#41;;
-extract;
-print Dumper extresult;
+<h2>Get pages in parallel</h2>
+<pre class="formatter_pre">url&#40;&#34;google.com&#34;&#41;-&gt;&#40;&#41; &gt;&gt; _self;
+pfetch&#40;sub{
+           local $_ = shift;
+           print join q/ /, title, current_url, document-&gt;size, $/;
+       }&#41;;
 </pre>
-<h3>Extract data from CPAN after some HTML cleanup</h3>
-<pre class="formatter_pre">url&#40;&#34;http://search.cpan.org/recent&#34;&#41;-&gt;&#40;&#41;;
-submit_form&#40;
-        form_name =&gt; &#34;f&#34;,
-        fields =&gt; {
-                   query =&gt; &#34;perl&#34;
-                  }&#41;;
-preproc&#40;q&#40;s/\A.+&lt;!--results--&gt;&#40;.+&#41;&lt;!--end results--&gt;.+\Z/$1/s&#41;&#41;;
-print document-&gt;as_string;    # print content to STDOUT
-template&#40;&#34;&lt;!--item--&gt;[% p %]&lt;!--end item--&gt;&#34;&#41;;
-extract;
-print Dumper extresult;
-</pre>
-<h3>HTML cleanup, extract data, and refine results</h3>
-<pre class="formatter_pre">url&#40;&#34;http://search.cpan.org/recent&#34;&#41;-&gt;&#40;&#41;;
-submit_form&#40;
-        form_name =&gt; &#34;f&#34;,
-        fields =&gt; {
-                   query =&gt; &#34;perl&#34;
-                  }&#41;;
-preproc&#40;q&#40;s/\A.+&lt;!--results--&gt;&#40;.+&#41;&lt;!--end results--&gt;.+\Z/$1/s&#41;&#41;;
-print $$_;    # print content to STDOUT
-template&#40;&#34;&lt;!--item--&gt;[% rec %]&lt;!--end item--&gt;&#34;&#41;;
-extract;
-postproc&#40;q&#40;$_-&gt;{rec} =~ s/&lt;.+?&gt;//g&#41;&#41;;     # Strip HTML tags
-print Dumper extresult;
-</pre>
-<h3>Use filtering syntax</h3>
-<pre class="formatter_pre">fetch&#40;&#34;http://search.cpan.org/recent&#34;&#41;;
-submit_form&#40;
-            form_name =&gt; &#34;f&#34;,
-            fields =&gt; {
-                       query =&gt; &#34;perl&#34;
-            }&#41;;
-$_ | _doc_filter&#40;q&#40;s/\A.+&lt;!--results--&gt;&#40;.+&#41;&lt;!--end results--&gt;.+\Z/$1/s&#41;&#41;
-   | _template&#40;&#34;&lt;!--item--&gt;[% rec %]&lt;!--end item--&gt;&#34;&#41;
-   | _result_filter&#40;q&#40;$_-&gt;{rec} =~ s/&lt;.+?&gt;//g&#41;&#41;;
-print Dumper \@$_;
-</pre>
-<small>continued...</small>
 
 </div>
 <!-- BEGIN bottom -->
@@ -236,9 +191,9 @@ print Dumper \@$_;
 <tr>
 <td align="left" valign="middle">
     <div>
-    <a accesskey='p' href="slide24c.html#end">&lt; &lt; Previous</a> |
+    <a accesskey='p' href="slide23.html">&lt; &lt; Previous</a> |
     <a accesskey='i' href="index.html">Index</a> |
-    <a accesskey='n' href="slide24e.html#end">Next &gt;&gt;</a>
+    <a accesskey='n' href="slide25a.html">Next &gt;&gt;</a>
     </div>
 </td>
 <td align="right" valign="middle">

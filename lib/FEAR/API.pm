@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.468';
+our $VERSION = '0.470';
 
 use utf8;
 our @EXPORT
@@ -64,15 +64,17 @@ use File::Slurp;
 use File::Slurp;
 use File::Spec::Functions qw(catfile splitpath);
 use Inline::Files::Virtual;
+use IPC::SysV qw(IPC_RMID);
 use List::Util;
+use Parallel::ForkManager;
 use Storable qw(dclone freeze thaw);
 use Switch;
 use Template;
+use Tie::ShareLite qw( :lock );
 use URI;
 use URI::Split;
 use URI::WithBase;
 use YAML;
-
 
 #================================================================================
 # Overloaded operators.
@@ -157,7 +159,7 @@ sub _print()            {  [ sub {
 			       }
 			     }
 			     else {
-			       print $self->document->as_string ;
+			       &print( $self->document->as_string );
 			     }
 			   }, $_[0]  ] }
 sub _keep_links()     {  [ sub { shift->keep_links(shift()) } , \@_ ]   }
@@ -198,7 +200,9 @@ chain_sub ol_filter {
 }
 
 sub ol_subref {
-  sub { $self->fetch(@_) };
+  sub { 
+      $self->fetch(@_);
+  };
 }
 
 sub ol_aryref {
@@ -253,9 +257,6 @@ sub ol_bool {
 #
 ######################################################################
 
-# A flag indicating if the fear() is in parallel fetching mode
-our $IS_PARALLEL;
-
 # Default query terms are used to help to retrieve results from search
 # engines without a specific vocabulary
 our @default_query_terms =
@@ -264,9 +265,8 @@ our @default_query_terms =
 sub import() {
     __PACKAGE__->SUPER::import(@_, -package => caller(0));
 
-    local *boolean_arguments = sub { qw(-parallel -blessed) };
-    local *paired_arguments = 
-      sub {
+    local *boolean_arguments = sub { qw(-blessed) };
+    local *paired_arguments = sub {
 	qw(
 	   -url
 	  ) };
@@ -276,7 +276,9 @@ sub import() {
 	$_ = fear();
         $_->url($arg->{-url}) if $arg->{-url};
     }
+
 }
+
 
 
 #================================================================================
@@ -335,6 +337,8 @@ field max_exec_time => undef;            # Exceed this limit and program exits.
 field extmethod => 'Template::Extract';
 field document_stack => [];
 field referer => undef;
+field max_processes => 5;
+
 
 chain allow_duplicate => 0;
 chain eval_proc => 1;                    # Evaluate pre|post procesing code
@@ -348,6 +352,34 @@ chain fetch_delay => 1;                  # The mininum delay between fetchings, 
 chain quiet => 0;                        # Turn on/off warnings
 chain max_fetching_count => 0;           # Maximum number of fetching
 chain auto_add_fields => 1;              # Auto-add fields to results, such as 'url'
+chain parallel => 0;                     # Use/Don't use parallel fetching
+
+
+#======================================================================
+# Shared memory
+#======================================================================
+
+my $shared_key = '6666';
+my $shared_handle = tie my %shared_var, 'Tie::ShareLite',
+    -key     => $shared_key,
+    -mode    => 0700,
+    -create  => 'yes',
+    -destroy => 'no'
+	or croak("Could not tie to shared memory: $!");
+
+field shared_handle => $shared_handle;
+field shared_var => \%shared_var;
+
+$shared_handle->lock(LOCK_EX);
+$shared_var{fetching_count} = 0;
+$shared_handle->unlock;
+
+use subs 'print';
+sub print {
+  $shared_handle->lock(LOCK_EX);
+  CORE::print(@_);
+  $shared_handle->unlock;
+};
 
 
 
@@ -370,10 +402,10 @@ chain_sub handler {
 	    $self->{handler} = sub { ${$_[0]} = shift };
 	}
 	elsif($_[0] eq 'Data::Dumper'){
-	    $self->{handler} = sub { print Dumper shift };
+	    $self->{handler} = sub { &print(Dumper shift) };
 	}
 	elsif($_[0] eq 'YAML'){
-	    $self->{handler} = sub { print YAML::Dump shift };
+	    $self->{handler} = sub { &print( YAML::Dump shift) };
 	}
 	else{
 	    # If the handler's namespace cannot be seen
@@ -578,7 +610,19 @@ chain_sub try_compress_document {
 }
 
 sub inc_fetching_count {
+    if($self->{parallel}){
+	$self->shared_handle->lock(LOCK_EX);
+	if( exists $self->shared_var->{fetching_count} ){
+	    $self->{fetching_count} = $self->shared_var->{fetching_count};
+	}
+    }
+
     $self->{fetching_count}++;
+    
+    if($self->{parallel}){
+	$self->shared_var->{fetching_count} = $self->{fetching_count};
+	$self->shared_handle->unlock;
+    }
 }
 
 sub reach_max_fetching_count {
@@ -589,7 +633,7 @@ sub reach_max_fetching_count {
 
 sub getprint {
   $self->fetch(shift());
-  print $self->doc->as_string;
+  &print($self->doc->as_string);
 }
 
 sub getstore {
@@ -617,7 +661,7 @@ chain_sub fetch {
     my $append_to_document = $_[1];
 
     if( $url and $self->urlhistory->has($url) ){
-      print "\n   $url has been visited.\n";
+      &print( "\n   $url has been visited.\n");
       goto FETCH;
     }
     if($self->reach_max_fetching_count){
@@ -631,7 +675,7 @@ chain_sub fetch {
 
 
     $self->inc_fetching_count();
-    print "\n> [".$self->fetching_count."] Fetching $url ...\n";
+    &print( "\n> [".$self->fetching_count."] Fetching $url ...\n");
 
     my $wua = $self->wua;
     my $d = $url =~ m(^file://) ?
@@ -644,7 +688,7 @@ chain_sub fetch {
 	    $wua->content;
 	  };
 
-    print "      [",$wua->title,"]",$/ if $wua->title;
+    &print( "      [",$wua->title,"]",$/) if $wua->title;
     $append_to_document ?
       $self->document->append($d) : $self->document->content($d);
 
@@ -655,6 +699,27 @@ chain_sub fetch {
 
 chain_sub fetch_and_append {
     $self->fetch($_[0], 1);
+}
+
+chain_sub pfetch {
+    my $callback = shift;
+
+    my $pm = new Parallel::ForkManager($self->max_processes);
+    while (my $link = shift @{$self->{url}}){
+	my $pid = $pm->start and next;
+	{
+	    $self->parallel(1);
+	    $self->fetch($link);
+	    if( ref $callback ){
+		$self->shared_handle->lock(LOCK_EX);
+		&$callback($self);
+		$self->shared_handle->unlock;
+	    }
+	    $self->parallel(0);
+	}
+	$pm->finish;
+    }
+    $pm->wait_all_children;
 }
 
 
@@ -838,12 +903,12 @@ chain_sub report_links {
 	  if($action eq _feedback){
 	    if(!$self->value('allow_duplicate') &&
 	       !$self->urlhistory->has($item->url)){
-	      print "   Feed back [".$item->text."] ".$item->url."\n";
+	      &print( "   Feed back [".$item->text."] ".$item->url."\n");
 	      push @{$self->{url}}, $item;
 	    }
 	  }
 	  elsif($action eq 'Data::Dumper'){
-	    print Dumper $item;
+	    &print( Dumper $item);
 	  }
 	  elsif(ref $action eq 'ARRAY'){
 	    push @{$action}, $item;
@@ -1004,7 +1069,7 @@ sub _process_ua_resp {
 chain_sub get {
     my $u = URI::URL->new(shift());
     $u->query_form(@_);
-    print $u->as_string,$/;
+    &print( $u->as_string,$/);
     $self->fetch($u->as_string);
 }
 
@@ -1025,7 +1090,7 @@ chain_sub agent_alias {
 
 chain_sub submit_form {
   my %arg = @_;
-  print "     Submit form [ ".($arg{form_name} || $arg{form_number})." ]\n";
+  &print( "     Submit form [ ".($arg{form_name} || $arg{form_number})." ]\n");
   $self->wua->submit_form(%arg);
   $self->sync_document;
 }
@@ -1184,6 +1249,14 @@ More documentation will come sooooooner or later.
          http://some.site/[% i %]
          [% END %]");
     &$_ while $_;
+    
+=head2 Get pages in parallel
+
+    url("google.com")->() >> _self;
+    pfetch(sub{
+               local $_ = shift;
+               print join q/ /, title, current_url, document->size, $/;
+           });
 
 =head2 Deal with links in a web page (I)
 

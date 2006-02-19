@@ -276,6 +276,15 @@ presentation_date:
 
 
 ----
+== 同步抓取網頁
+
+    url("google.com")->() >> _self;
+    pfetch(sub{
+               local $_ = shift;
+               print join q/ /, title, current_url, document->size, $/;
+           });
+
+----
 == 抓取資料
 
 === 從 CPAN 上抓出資料

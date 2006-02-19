@@ -3,7 +3,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>文件前處理</title>
+<title>同步抓取網頁</title>
 <meta name="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="Spork v0.20" />
 <link rel='icon' href='favicon.png' />
@@ -107,11 +107,11 @@ small {
 <script type="text/javascript">
 // BEGIN controls.js
 function nextSlide() {
-    window.location = 'slide26.html';
+    window.location = 'slide25a.html';
 }
 
 function prevSlide() {
-    window.location = 'slide24e.html#end';
+    window.location = 'slide23.html';
 }
 
 function indexSlide() {
@@ -166,7 +166,7 @@ document.onkeypress = handleKey
     <a accesskey="s" href="start.html">FEAR::API - There's no fear with this elegant site scraper</a>
 </td>
 <td align="right" width="13%">
-    #25
+    #24
 </td>
 </tr>
 </table>
@@ -176,11 +176,12 @@ document.onkeypress = handleKey
 <div id="content">
 <div class="top_spacer"></div>
 
-<h2>文件前處理</h2>
-<pre class="formatter_pre">url&#40;&#34;google.com&#34;&#41;-&gt;&#40;&#41;
-| _preproc&#40;use =&gt; &#34;html_to_null&#34;&#41;
-| _preproc&#40;use =&gt; &#34;decode_entities&#34;&#41;
-| _print;
+<h2>同步抓取網頁</h2>
+<pre class="formatter_pre">url&#40;&#34;google.com&#34;&#41;-&gt;&#40;&#41; &gt;&gt; _self;
+pfetch&#40;sub{
+           local $_ = shift;
+           print join q/ /, title, current_url, document-&gt;size, $/;
+       }&#41;;
 </pre>
 
 </div>
@@ -190,9 +191,9 @@ document.onkeypress = handleKey
 <tr>
 <td align="left" valign="middle">
     <div>
-    <a accesskey='p' href="slide24e.html#end">&lt; &lt; Previous</a> |
+    <a accesskey='p' href="slide23.html">&lt; &lt; Previous</a> |
     <a accesskey='i' href="index.html">Index</a> |
-    <a accesskey='n' href="slide26.html">Next &gt;&gt;</a>
+    <a accesskey='n' href="slide25a.html">Next &gt;&gt;</a>
     </div>
 </td>
 <td align="right" valign="middle">

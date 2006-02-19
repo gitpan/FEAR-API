@@ -3,7 +3,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>如果不用 -base</title>
+<title>抓取資料</title>
 <meta name="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="Spork v0.20" />
 <link rel='icon' href='favicon.png' />
@@ -107,11 +107,11 @@ small {
 <script type="text/javascript">
 // BEGIN controls.js
 function nextSlide() {
-    window.location = 'slide29.html';
+    window.location = 'slide25b.html#end';
 }
 
 function prevSlide() {
-    window.location = 'slide27.html';
+    window.location = 'slide24.html';
 }
 
 function indexSlide() {
@@ -166,7 +166,7 @@ document.onkeypress = handleKey
     <a accesskey="s" href="start.html">FEAR::API - There's no fear with this elegant site scraper</a>
 </td>
 <td align="right" width="13%">
-    #28
+    #25
 </td>
 </tr>
 </table>
@@ -176,20 +176,19 @@ document.onkeypress = handleKey
 <div id="content">
 <div class="top_spacer"></div>
 
-<h2>如果不用 -base</h2>
-<pre class="formatter_pre">use FEAR::API;
-my $f = fear&#40;&#41;;
-$f-&gt;fetch&#40;&#34;blah&#34;&#41;;
-# ..., etc.
+<h2>抓取資料</h2>
+<h3>從 CPAN 上抓出資料</h3>
+<pre class="formatter_pre">url&#40;&#34;http://search.cpan.org/recent&#34;&#41;-&gt;&#40;&#41;;
+submit_form&#40;
+        form_name =&gt; &#34;f&#34;,
+        fields =&gt; {
+                   query =&gt; &#34;perl&#34;
+                  }&#41;;
+template&#40;&#34;&lt;!--item--&gt;[% p %]&lt;!--end item--&gt;&#34;&#41;;
+extract;
+print Dumper extresult;
 </pre>
-<p>
-使用 -base, $_ 會自動設成 FEAR::API 物件。
-
-</p>
-<pre class="formatter_pre">use FEAR::API -base;
-fetch&#40;&#34;blah&#34;&#41;;
-# ..., etc.
-</pre>
+<small>continued...</small>
 
 </div>
 <!-- BEGIN bottom -->
@@ -198,9 +197,9 @@ fetch&#40;&#34;blah&#34;&#41;;
 <tr>
 <td align="left" valign="middle">
     <div>
-    <a accesskey='p' href="slide27.html">&lt; &lt; Previous</a> |
+    <a accesskey='p' href="slide24.html">&lt; &lt; Previous</a> |
     <a accesskey='i' href="index.html">Index</a> |
-    <a accesskey='n' href="slide29.html">Next &gt;&gt;</a>
+    <a accesskey='n' href="slide25b.html#end">Next &gt;&gt;</a>
     </div>
 </td>
 <td align="right" valign="middle">

@@ -278,6 +278,15 @@ spend shorter time and write the least amount of code to come up to the same req
     $_->() while $_;
     print Dumper \@l;
 
+----
+== Get pages in parallel
+
+    url("google.com")->() >> _self;
+    pfetch(sub{
+               local $_ = shift;
+               print join q/ /, title, current_url, document->size, $/;
+           });
+
 
 ----
 == Extraction

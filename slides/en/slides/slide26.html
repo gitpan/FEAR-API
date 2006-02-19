@@ -3,7 +3,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>Postprocess extraction results</title>
+<title>Preprocess document</title>
 <meta name="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="Spork v0.20" />
 <link rel='icon' href='favicon.png' />
@@ -111,7 +111,7 @@ function nextSlide() {
 }
 
 function prevSlide() {
-    window.location = 'slide25.html';
+    window.location = 'slide25e.html#end';
 }
 
 function indexSlide() {
@@ -176,18 +176,11 @@ document.onkeypress = handleKey
 <div id="content">
 <div class="top_spacer"></div>
 
-<h2>Postprocess extraction results</h2>
-<pre class="formatter_pre">fetch&#40;&#34;http://search.cpan.org/recent&#34;&#41;;
-submit_form&#40;
-            form_name =&gt; &#34;f&#34;,
-            fields =&gt; {
-                       query =&gt; &#34;perl&#34;
-            }&#41;;
-$_ | _doc_filter&#40;q&#40;s/\A.+&lt;!--results--&gt;&#40;.+&#41;&lt;!--end results--&gt;.+\Z/$1/s&#41;&#41;
-   | _template&#40;&#34;&lt;!--item--&gt;[% rec %]&lt;!--end item--&gt;&#34;&#41;
-   | _result_filter&#40;use =&gt; &#34;html_to_null&#34;,    qw&#40;rec&#41;&#41;;
-   | _result_filter&#40;use =&gt; &#34;decode_entities&#34;, qw&#40;rec&#41;&#41;
-print Dumper \@$_;
+<h2>Preprocess document</h2>
+<pre class="formatter_pre">url&#40;&#34;google.com&#34;&#41;-&gt;&#40;&#41;
+| _preproc&#40;use =&gt; &#34;html_to_null&#34;&#41;
+| _preproc&#40;use =&gt; &#34;decode_entities&#34;&#41;
+| _print;
 </pre>
 
 </div>
@@ -197,7 +190,7 @@ print Dumper \@$_;
 <tr>
 <td align="left" valign="middle">
     <div>
-    <a accesskey='p' href="slide25.html">&lt; &lt; Previous</a> |
+    <a accesskey='p' href="slide25e.html#end">&lt; &lt; Previous</a> |
     <a accesskey='i' href="index.html">Index</a> |
     <a accesskey='n' href="slide27.html">Next &gt;&gt;</a>
     </div>

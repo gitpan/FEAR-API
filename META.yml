@@ -24,6 +24,7 @@ requires:
   HTML::LinkExtractor: 0
   IO::All: 0
   IO::String: 0
+  IPC::SysV: 0
   Inline: 0
   Inline::Files: 0
   Regexp::Bind: 0
@@ -31,7 +32,8 @@ requires:
   Spiffy: 0
   Template: 0
   Template::Extract: 0
+  Tie::ShareLite: 0
   WWW::Mechanize: 0
   XML::XPath: 0
   YAML: 0
-version: 0.468
+version: 0.470

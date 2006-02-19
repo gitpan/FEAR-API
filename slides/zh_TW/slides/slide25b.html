@@ -3,7 +3,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>Preprocess document</title>
+<title>抓取資料</title>
 <meta name="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="Spork v0.20" />
 <link rel='icon' href='favicon.png' />
@@ -107,11 +107,11 @@ small {
 <script type="text/javascript">
 // BEGIN controls.js
 function nextSlide() {
-    window.location = 'slide26.html';
+    window.location = 'slide25c.html#end';
 }
 
 function prevSlide() {
-    window.location = 'slide24e.html#end';
+    window.location = 'slide25a.html';
 }
 
 function indexSlide() {
@@ -176,12 +176,32 @@ document.onkeypress = handleKey
 <div id="content">
 <div class="top_spacer"></div>
 
-<h2>Preprocess document</h2>
-<pre class="formatter_pre">url&#40;&#34;google.com&#34;&#41;-&gt;&#40;&#41;
-| _preproc&#40;use =&gt; &#34;html_to_null&#34;&#41;
-| _preproc&#40;use =&gt; &#34;decode_entities&#34;&#41;
-| _print;
+<h2>抓取資料</h2>
+<h3>從 CPAN 上抓出資料</h3>
+<pre class="formatter_pre">url&#40;&#34;http://search.cpan.org/recent&#34;&#41;-&gt;&#40;&#41;;
+submit_form&#40;
+        form_name =&gt; &#34;f&#34;,
+        fields =&gt; {
+                   query =&gt; &#34;perl&#34;
+                  }&#41;;
+template&#40;&#34;&lt;!--item--&gt;[% p %]&lt;!--end item--&gt;&#34;&#41;;
+extract;
+print Dumper extresult;
 </pre>
+<h3>清理 HTML 再從 CPAN 上抓出資料</h3>
+<pre class="formatter_pre">url&#40;&#34;http://search.cpan.org/recent&#34;&#41;-&gt;&#40;&#41;;
+submit_form&#40;
+        form_name =&gt; &#34;f&#34;,
+        fields =&gt; {
+                   query =&gt; &#34;perl&#34;
+                  }&#41;;
+preproc&#40;q&#40;s/\A.+&lt;!--results--&gt;&#40;.+&#41;&lt;!--end results--&gt;.+\Z/$1/s&#41;&#41;;
+print document-&gt;as_string;    # print content to STDOUT
+template&#40;&#34;&lt;!--item--&gt;[% p %]&lt;!--end item--&gt;&#34;&#41;;
+extract;
+print Dumper extresult;
+</pre>
+<small>continued...</small>
 
 </div>
 <!-- BEGIN bottom -->
@@ -190,9 +210,9 @@ document.onkeypress = handleKey
 <tr>
 <td align="left" valign="middle">
     <div>
-    <a accesskey='p' href="slide24e.html#end">&lt; &lt; Previous</a> |
+    <a accesskey='p' href="slide25a.html">&lt; &lt; Previous</a> |
     <a accesskey='i' href="index.html">Index</a> |
-    <a accesskey='n' href="slide26.html">Next &gt;&gt;</a>
+    <a accesskey='n' href="slide25c.html#end">Next &gt;&gt;</a>
     </div>
 </td>
 <td align="right" valign="middle">

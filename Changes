@@ -68,3 +68,10 @@
 
 	- Add response(), and alias 'res' and 'resp'
 	- Add find_link()
+
+
+0.470  Sun, 19 Feb 2006 12:45:23 +0800
+
+	- Add pfetch() and its test
+	- slides update
+
