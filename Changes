@@ -75,3 +75,7 @@
 	- Add pfetch() and its test
 	- slides update
 
+0.471  Sun, 26 Feb 2006 19:26:40 +0800
+
+	- Add mime_encode() and mime_decode() in FEAR::API::Document
+	- remove_links() and keep_links() can accept coderef now

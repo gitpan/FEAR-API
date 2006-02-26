@@ -67,20 +67,32 @@ chain_sub sort_links {
 
 
 chain_sub keep_links {
+  my ($filter, $field);
+  if(@_ == 2){
+    $filter = $_[1];
+    $field = $_->[$name_to_number{$_[0]}];
+  }
+  else {
+    $filter = $_[0];
+    $field = $_->[0];
+  }
   @{$self->{links}} = grep {
-    @_ == 2 ?
-      $_->[$name_to_number{$_[0]}] =~ /$_[1]/
-	:
-	  $_->[0] =~ /$_[0]/;
+    ref $filter eq 'CODE' ? $field =~ /$filter/ : $filter->($field);
   } @{$self->{links}};
 }
 
 chain_sub remove_links {
+  my ($filter, $field);
+  if(@_ == 2){
+    $filter = $_[1];
+    $field = $_->[$name_to_number{$_[0]}];
+  }
+  else {
+    $filter = $_[0];
+    $field = $_->[0];
+  }
   @{$self->{links}} = grep {
-    @_ == 2 ?
-      $_->[$name_to_number{$_[0]}] !~ /$_[1]/
-	:
-	  $_->[0] !~ /$_[0]/;
+    ref $filter eq 'CODE' ? $field !~ /$filter/ : !$filter->($field);
   } @{$self->{links}};
 }
 

@@ -8,6 +8,7 @@ use File::MMagic;
 use FEAR::API::SourceFilter;
 use Encode;
 use Text::Iconv;
+use MIME::Base64;
 
 chain 'document';
 alias content => 'document';
@@ -85,6 +86,20 @@ chain_sub try_compress {
 chain_sub try_decompress {
   my $td = Compress::Zlib::memGunzip $self->{document};
   $self->{document} = $td if $td;
+}
+
+######################################################################
+# MIME methods
+######################################################################
+
+sub MIME_encode {
+    $self->utf8_off;
+    $self->{document} = encode_base64 $self->{document};
+}
+
+sub MIME_decode {
+  $self->{document} = decode_base64 $self->{document};
+  $self->utf8_on;
 }
 
 ######################################################################

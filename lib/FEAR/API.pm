@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.470';
+our $VERSION = '0.471';
 
 use utf8;
 our @EXPORT

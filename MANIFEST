@@ -142,6 +142,7 @@ slides/zh_TW/template/tt2/start.html
 slides/zh_TW/template/tt2/top.html
 t/agent_alias.t
 t/data/url_list
+t/document_mime.t
 t/document_type.t
 t/extract_links.t
 t/extraction.t
