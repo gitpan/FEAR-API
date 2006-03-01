@@ -29,7 +29,7 @@ template_path:
 slides_directory: slides
 download_method: wget
 character_encoding: utf-8
-link_previous: &lt; &lt; Previous
+link_previous: &lt;&lt; Previous
 link_next: Next &gt;&gt;
 link_index: Index
 

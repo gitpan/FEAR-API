@@ -20,12 +20,15 @@
 <div id="topbar">
 <table width='100%'>
 <tr>
-<td width="13%">[% presentation_topic %]</td>
+<td width="13%">
+    [% presentation_topic %]
+    [% slide_num ? "#$slide_num" : '&nbsp;' %]
+</td>
 <td align="center" width="73%">
     <a accesskey="s" href="start.html">[% presentation_title %]</a>
 </td>
 <td align="right" width="13%">
-    [% slide_num ? "#$slide_num" : '&nbsp;' %]
+    <a accesskey='n' href="[% next_slide %]">[% link_next %]</a>
 </td>
 </tr>
 </table>

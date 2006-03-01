@@ -6,7 +6,7 @@ use utf8;
 
 Template::Document->new({
     METADATA => {
-        'modtime' => '1138763658',
+        'modtime' => '1141179168',
         'name' => 'top.html',
     },
     BLOCK => sub {
@@ -63,16 +63,22 @@ Template::Document->new({
     $output .=  "\n--></style>\n<script type=\"text/javascript\">\n";
     #line 16 "template/tt2/top.html"
     $output .=  $context->include('controls.js');
-    $output .=  "\n</script>\n</head>\n<body>\n<div id=\"topbar\">\n<table width='100%'>\n<tr>\n<td width=\"13%\">";
-    #line 23 "template/tt2/top.html"
+    $output .=  "\n</script>\n</head>\n<body>\n<div id=\"topbar\">\n<table width='100%'>\n<tr>\n<td width=\"13%\">\n    ";
+    #line 24 "template/tt2/top.html"
     $output .=  $stash->get('presentation_topic');
-    $output .=  "</td>\n<td align=\"center\" width=\"73%\">\n    <a accesskey=\"s\" href=\"start.html\">";
-    #line 25 "template/tt2/top.html"
-    $output .=  $stash->get('presentation_title');
-    $output .=  "</a>\n</td>\n<td align=\"right\" width=\"13%\">\n    ";
+    $output .=  "\n    ";
     #line 0 "template/tt2/top.html"
     $output .=  $stash->get('slide_num') ? ("#" . $stash->get('slide_num')) : '&nbsp;';
-    $output .=  "\n</td>\n</tr>\n</table>\n</div>\n<!-- END top -->\n";
+    $output .=  "\n</td>\n<td align=\"center\" width=\"73%\">\n    <a accesskey=\"s\" href=\"start.html\">";
+    #line 28 "template/tt2/top.html"
+    $output .=  $stash->get('presentation_title');
+    $output .=  "</a>\n</td>\n<td align=\"right\" width=\"13%\">\n    <a accesskey='n' href=\"";
+    #line 31 "template/tt2/top.html"
+    $output .=  $stash->get('next_slide');
+    $output .=  "\">";
+    #line 31 "template/tt2/top.html"
+    $output .=  $stash->get('link_next');
+    $output .=  "</a>\n</td>\n</tr>\n</table>\n</div>\n<!-- END top -->\n";
         } };
         if ($@) {
             $error = $context->catch($@, \$output);

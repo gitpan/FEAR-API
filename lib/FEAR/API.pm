@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.471';
+our $VERSION = '0.472';
 
 use utf8;
 our @EXPORT
@@ -14,6 +14,7 @@ our @EXPORT
   (
    qw(
       fear
+      io
       @default_query_terms
       Dumper
      ),
@@ -34,6 +35,10 @@ our @EXPORT
 	_feedback
 	_self
 	_local_links
+	_grep
+	_map
+	_sort
+	_uniq
        )
   );
 
@@ -64,6 +69,7 @@ use File::Slurp;
 use File::Slurp;
 use File::Spec::Functions qw(catfile splitpath);
 use Inline::Files::Virtual;
+use IO::All;
 use IPC::SysV qw(IPC_RMID);
 use List::Util;
 use Parallel::ForkManager;
@@ -170,6 +176,12 @@ sub _export($$)       {  [ sub {
 			     my $varref = $_[0]->[1];
 			     $varref = $self->{$field};
 			   } => \@_ ] }
+
+sub _map($)           {  [ sub { shift->document->d_map(shift()) }, $_[0] ] }
+sub _grep($)          {  [ sub { shift->document->d_grep(shift()) }, $_[0] ] }
+sub _sort(;$)         {  [ sub { shift->document->d_sort(shift()) }, $_[0] ] }
+sub _uniq()           {  [ sub { shift->document->d_uniq() } ] }
+
 sub _foreach_result(&)      {  [ sub {
 				   my $self = shift;
 				   my $sub = $_[0]->[0];
@@ -1201,7 +1213,6 @@ More documentation will come sooooooner or later.
 
     url("google.com")->() | _save_as("google.html");
     
-    use IO::All;
     fetch("google.com") | io('google.html');
 
 =head2 Follow links in Google's homepage

@@ -3,7 +3,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>If you don't use with -base</title>
+<title>Shell-like functions</title>
 <meta name="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="Spork v0.20" />
 <link rel='icon' href='favicon.png' />
@@ -161,12 +161,15 @@ document.onkeypress = handleKey
 <div id="topbar">
 <table width='100%'>
 <tr>
-<td width="13%">FEAR::API</td>
+<td width="13%">
+    FEAR::API
+    #28
+</td>
 <td align="center" width="73%">
     <a accesskey="s" href="start.html">FEAR::API - There's no fear with this elegant site scraper</a>
 </td>
 <td align="right" width="13%">
-    #28
+    <a accesskey='n' href="slide29.html">Next &gt;&gt;</a>
 </td>
 </tr>
 </table>
@@ -176,19 +179,13 @@ document.onkeypress = handleKey
 <div id="content">
 <div class="top_spacer"></div>
 
-<h2>If you don't use with -base</h2>
-<pre class="formatter_pre">use FEAR::API;
-my $f = fear&#40;&#41;;
-$f-&gt;fetch&#40;&#34;blah&#34;&#41;;
-# ..., etc.
-</pre>
-<p>
-Use with -base, and $_ will be set to FEAR::API.
-
-</p>
-<pre class="formatter_pre">use FEAR::API -base;
-fetch&#40;&#34;blah&#34;&#41;;
-# ..., etc.
+<h2>Shell-like functions</h2>
+<pre class="formatter_pre">url&#40;&#34;some.site/some.document.txt&#34;&#41;-&gt;&#40;&#41;
+| _map&#40;qr&#40;some_pattern&#41;&#41;
+| _sort
+| _grep&#40;qr&#40;some_other_pattern&#41;&#41;
+| _uniq
+;
 </pre>
 
 </div>
@@ -198,7 +195,7 @@ fetch&#40;&#34;blah&#34;&#41;;
 <tr>
 <td align="left" valign="middle">
     <div>
-    <a accesskey='p' href="slide27.html">&lt; &lt; Previous</a> |
+    <a accesskey='p' href="slide27.html">&lt;&lt; Previous</a> |
     <a accesskey='i' href="index.html">Index</a> |
     <a accesskey='n' href="slide29.html">Next &gt;&gt;</a>
     </div>

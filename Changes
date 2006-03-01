@@ -79,3 +79,10 @@
 
 	- Add mime_encode() and mime_decode() in FEAR::API::Document
 	- remove_links() and keep_links() can accept coderef now
+
+0.472  Wed, 01 Mar 2006 10:16:32 +0800
+
+	- Add shell-like commands _sort, _grep, _map, _uniq in API.pm
+	- Add shell-like commands d_sort, d_grep, d_map, d_uniq, sort, grep, map, uniq in Document.pm
+	- Slides update
+	- io() is automatically exported

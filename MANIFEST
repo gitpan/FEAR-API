@@ -61,6 +61,7 @@ slides/en/slides/slide27.html
 slides/en/slides/slide28.html
 slides/en/slides/slide29.html
 slides/en/slides/slide30.html
+slides/en/slides/slide31.html
 slides/en/slides/slide3a.html
 slides/en/slides/slide3b.html
 slides/en/slides/slide4.html
@@ -119,6 +120,7 @@ slides/zh_TW/slides/slide27.html
 slides/zh_TW/slides/slide28.html
 slides/zh_TW/slides/slide29.html
 slides/zh_TW/slides/slide30.html
+slides/zh_TW/slides/slide31.html
 slides/zh_TW/slides/slide3a.html
 slides/zh_TW/slides/slide3b.html
 slides/zh_TW/slides/slide4.html
@@ -169,6 +171,7 @@ t/recursive_get.t
 t/report_links.t
 t/save_as_tree.t
 t/save_to_file.t
+t/shell_like.t
 t/shuffle_urlqueue.t
 t/skip_document_with_without.t
 t/sort_links.t

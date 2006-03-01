@@ -383,6 +383,16 @@ spend shorter time and write the least amount of code to come up to the same req
     print Dumper \@$_;
 
 ----
+== Shell-like functions
+
+   url("some.site/some.document.txt")->()
+   | _map(qr(some_pattern))
+   | _sort
+   | _grep(qr(some_other_pattern))
+   | _uniq
+   ;
+
+----
 == If you don't use with -base
 
    use FEAR::API;

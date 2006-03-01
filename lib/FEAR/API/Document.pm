@@ -9,6 +9,7 @@ use FEAR::API::SourceFilter;
 use Encode;
 use Text::Iconv;
 use MIME::Base64;
+use Digest::MD5 qw(md5);
 
 chain 'document';
 alias content => 'document';
@@ -145,6 +146,69 @@ sub has_tag {
 
 sub has_tag_like {
 }
+
+######################################################################
+# Shell-like methods
+######################################################################
+
+sub sort($&) {
+  my $self = shift;
+  my $code = shift;
+  if(ref $code eq 'CODE'){
+    return join qq/\n/, CORE::sort{$code->($_)} split /\n/, $self->{document};
+  }
+  else {
+    return join qq/\n/, CORE::sort split /\n/, $self->{document};
+  }
+}
+
+sub map($&) {
+  my $self = shift;
+  my $code = shift;
+  if(ref $code eq 'CODE'){
+    return join qq/\n/, CORE::map{$code->($_)} split /\n/, $self->{document};
+  }
+  elsif(ref $code eq 'Regexp') {
+    return join qq/\n/, CORE::map{m($code)} split /\n/, $self->{document};
+  }
+}
+
+sub grep($&) {
+  my $self = shift;
+  my $code = shift;
+  if(ref $code eq 'CODE'){
+    return join qq/\n/, CORE::grep{$code->($_)} split /\n/, $self->{document};
+  }
+  elsif(ref $code eq 'Regexp') {
+    return join qq/\n/, CORE::grep{m($code)} split /\n/, $self->{document};
+  }
+}
+
+sub uniq {
+  my %h;
+  return join qq/\n/, grep{Encode::_utf8_off $_;
+			   !$h{md5 $_}++} split /\n/, $self->{document};
+}
+
+########################################
+# d is for destructive
+####################
+chain_sub d_map {
+  $self->{document} = $self->map(@_);
+}
+
+chain_sub d_grep {
+  $self->{document} = $self->grep(@_);
+}
+
+chain_sub d_sort {
+  $self->{document} = $self->sort(@_);
+}
+
+chain_sub d_uniq {
+  $self->{document} = $self->uniq(@_);
+}
+
 
 ######################################################################
 # Conversion methods
