@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.472';
+our $VERSION = '0.473';
 
 use utf8;
 our @EXPORT
@@ -67,7 +67,7 @@ use Encode;
 use File::Path;
 use File::Slurp;
 use File::Slurp;
-use File::Spec::Functions qw(catfile splitpath);
+use File::Spec::Functions qw(catfile splitpath rel2abs);
 use Inline::Files::Virtual;
 use IO::All;
 use IPC::SysV qw(IPC_RMID);
@@ -662,7 +662,9 @@ chain_sub fetch {
 #    print Dumper $self->{url}->[0];
   FETCH:
     my $link = shift(@_) || shift @{$self->{url}} || croak "Please input a URL\n";
-    $link = WWW::Mechanize::Link->new($link !~ m(^http://) ?
+    my $append_to_document = shift;
+
+    $link = WWW::Mechanize::Link->new($link !~ m(^\w+://) ?
 				      'http://'.$link : $link
 				     ) unless ref $link;
 #    print Dumper $link;
@@ -670,7 +672,6 @@ chain_sub fetch {
     my $referer = $link->referer || $self->value('referer');
 
 
-    my $append_to_document = $_[1];
 
     if( $url and $self->urlhistory->has($url) ){
       &print( "\n   $url has been visited.\n");
@@ -690,20 +691,16 @@ chain_sub fetch {
     &print( "\n> [".$self->fetching_count."] Fetching $url ...\n");
 
     my $wua = $self->wua;
-    my $d = $url =~ m(^file://) ?
-      scalar(read_file $')
-	:
+    my $d =
 	  do {
 	    $wua->add_header(Referer => $referer) if $referer;
 	    $wua->get_content($url);
 	    $wua->delete_header('Referer') if $referer;
 	    $wua->content;
 	  };
-
     &print( "      [",$wua->title,"]",$/) if $wua->title;
     $append_to_document ?
       $self->document->append($d) : $self->document->content($d);
-
     $self
 	->try_decompress_document()
 	;
@@ -711,6 +708,11 @@ chain_sub fetch {
 
 chain_sub fetch_and_append {
     $self->fetch($_[0], 1);
+}
+
+chain_sub file {
+  my $file = rel2abs(shift);
+  -e $file ? fetch("file://$file") : croak "$file does not exist";
 }
 
 chain_sub pfetch {

@@ -86,3 +86,9 @@
 	- Add shell-like commands d_sort, d_grep, d_map, d_uniq, sort, grep, map, uniq in Document.pm
 	- Slides update
 	- io() is automatically exported
+
+0.473  Wed, 01 Mar 2006 14:12:32 +0800
+
+	- Add file() in API.pm
+	- Slides update
+

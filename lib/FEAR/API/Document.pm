@@ -155,10 +155,10 @@ sub sort($&) {
   my $self = shift;
   my $code = shift;
   if(ref $code eq 'CODE'){
-    return join qq/\n/, CORE::sort{$code->($_)} split /\n/, $self->{document};
+    return join q//, map{"$_\n"} CORE::sort{$code->($_)} split /\n/, $self->{document};
   }
   else {
-    return join qq/\n/, CORE::sort split /\n/, $self->{document};
+    return join q//, map{"$_\n"} CORE::sort split /\n/, $self->{document};
   }
 }
 
@@ -166,10 +166,10 @@ sub map($&) {
   my $self = shift;
   my $code = shift;
   if(ref $code eq 'CODE'){
-    return join qq/\n/, CORE::map{$code->($_)} split /\n/, $self->{document};
+    return join q//, map{"$_\n"} CORE::map{$code->($_)} split /\n/, $self->{document};
   }
   elsif(ref $code eq 'Regexp') {
-    return join qq/\n/, CORE::map{m($code)} split /\n/, $self->{document};
+    return join q//, map{"$_\n"} CORE::map{m($code)} split /\n/, $self->{document};
   }
 }
 
@@ -177,16 +177,16 @@ sub grep($&) {
   my $self = shift;
   my $code = shift;
   if(ref $code eq 'CODE'){
-    return join qq/\n/, CORE::grep{$code->($_)} split /\n/, $self->{document};
+    return join q//, map{"$_\n"} CORE::grep{$code->($_)} split /\n/, $self->{document};
   }
   elsif(ref $code eq 'Regexp') {
-    return join qq/\n/, CORE::grep{m($code)} split /\n/, $self->{document};
+    return join q//, map{"$_\n"} CORE::grep{m($code)} split /\n/, $self->{document};
   }
 }
 
 sub uniq {
   my %h;
-  return join qq/\n/, grep{Encode::_utf8_off $_;
+  return join q//, map{"$_\n"} grep{Encode::_utf8_off $_;
 			   !$h{md5 $_}++} split /\n/, $self->{document};
 }
 
