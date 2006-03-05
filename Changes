@@ -92,3 +92,11 @@
 	- Add file() in API.pm
 	- Slides update
 
+
+0.474  Sun, 05 Mar 2006 22:56:42 +0800
+
+	- Add _xpath() filter
+	- Document updates. _to_xhtml(). _compress(), uncompress()
+	- Behavior of coderef in dispatch_links is changed. $_ defaults to
+          $self, and the first argument is a matched link.
+

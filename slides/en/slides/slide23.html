@@ -184,7 +184,7 @@ document.onkeypress = handleKey
   &gt;&gt; {
       qr&#40;^http:&#41; =&gt; _self,
       qr&#40;google&#41; =&gt; \my @l,
-      qr&#40;google&#41; =&gt; sub {  print &#34;&gt;&gt;&gt;&#34;.$_-&gt;[0],$/ }
+      qr&#40;google&#41; =&gt; sub {  print &#34;&gt;&gt;&gt;&#34;.$_[0]-&gt;[0],$/ }
      };
 $_-&gt;&#40;&#41; while $_;
 print Dumper \@l;

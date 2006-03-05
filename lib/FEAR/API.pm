@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.473';
+our $VERSION = '0.474';
 
 use utf8;
 our @EXPORT
@@ -181,6 +181,13 @@ sub _map($)           {  [ sub { shift->document->d_map(shift()) }, $_[0] ] }
 sub _grep($)          {  [ sub { shift->document->d_grep(shift()) }, $_[0] ] }
 sub _sort(;$)         {  [ sub { shift->document->d_sort(shift()) }, $_[0] ] }
 sub _uniq()           {  [ sub { shift->document->d_uniq() } ] }
+
+sub _compress()       {  [ sub { shift->document->try_compress() } ] }
+sub _uncompress()     {  [ sub { shift->document->try_uncompress() } ] }
+
+sub _html_to_xhtml()    {  [ sub { shift->document->html_to_xhtml() } ] }
+alias _to_xhtml => '_html_to_xhtml';
+sub _xpath()            {  [ sub { shift->document->xpath(@{$_[0]}) }, \@_ ] }
 
 sub _foreach_result(&)      {  [ sub {
 				   my $self = shift;
@@ -931,8 +938,8 @@ chain_sub report_links {
 	    $action->{$item} = 1;
 	  }
 	  elsif(ref $action eq 'CODE'){
-	    local $_ = $item;
-	    &{$action};
+	    local $_ = $self;
+	    &{$action}($item);
 	  }
 	  last if not $self->{fallthrough_report};
 	}
@@ -1411,6 +1418,21 @@ More documentation will come sooooooner or later.
        | _result_filter(use => "decode_entities", qw(rec))
     print Dumper \@$_;
 
+=head1 Convert HTML to XHTML
+
+
+    print fetch("google.com")->document->html_to_xhtml->as_string;
+
+    fetch("google.com") | _to_xhtml;
+    print $$_;
+
+=head1 Select content of interest using XPath
+
+    print fetch("google.com")->document->html_to_xhtml->xpath('/html/body/*/form')->as_string;
+
+    fetch("google.com") | _to_xhtml | _xpath('/html/body/*/form');
+    print $$_;
+    
 
 =head1 AUTHOR & COPYRIGHT
 

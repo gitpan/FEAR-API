@@ -257,7 +257,7 @@ presentation_date:
       >> [
           qr(^http:) => _self,
           qr(google) => \my @l,
-          qr(google) => sub {  print ">>>".$_->[0],$/ }
+          qr(google) => sub {  print ">>>".$_[0]->[0],$/ }
          ];
     $_->() while $_;
     print Dumper \@l;
@@ -269,7 +269,7 @@ presentation_date:
       >> {
           qr(^http:) => _self,
           qr(google) => \my @l,
-          qr(google) => sub {  print ">>>".$_->[0],$/ }
+          qr(google) => sub {  print ">>>".$_[0]->[0],$/ }
          };
     $_->() while $_;
     print Dumper \@l;

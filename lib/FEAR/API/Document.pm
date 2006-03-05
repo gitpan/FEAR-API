@@ -40,8 +40,7 @@ chain_sub utf8_off {
 
 chain_sub iconv_from {
   my $converter =
-    Text::Iconv
-    ->new((shift() || croak "please input encoding"), 'UTF-8') or croak $!;
+    Text::Iconv->new((shift() || croak "please input encoding"), 'UTF-8') or croak $!;
   $self->{document} = $converter->convert($self->{document});
   $self->utf8_on;
 }
@@ -84,6 +83,7 @@ chain_sub try_compress {
   $self->{document} = $td if $td;
 }
 
+alias try_uncompress => 'try_decompress';
 chain_sub try_decompress {
   my $td = Compress::Zlib::memGunzip $self->{document};
   $self->{document} = $td if $td;
@@ -93,11 +93,13 @@ chain_sub try_decompress {
 # MIME methods
 ######################################################################
 
+alias mime_encode => 'MIME_encode';
 sub MIME_encode {
     $self->utf8_off;
     $self->{document} = encode_base64 $self->{document};
 }
 
+alias mime_decode => 'MIME_decode';
 sub MIME_decode {
   $self->{document} = decode_base64 $self->{document};
   $self->utf8_on;
@@ -219,28 +221,14 @@ use XML::XPath;
 use XML::XPath::XMLParser;
 
 
-sub _convert_via_tmpfiles {
-    my $command = shift;
-    my $outputfile = shift;
-    my ($fh, $file) = tmpnam();
-    close $fh;
-    if($outputfile){
-	eval "`$command $outputfile`";
-	$self->{document} = io(eval $outputfile)->all;
-    }
-    else {
-	$self->{document} = eval "`$command`";
-    }
-    $self->try_to_utf8;
-    unlink $file;
-}
-
-sub html_to_xhtml {
+alias to_xhtml => 'html_to_xhtml';
+chain_sub html_to_xhtml {
+    local $/;
+    open STDERR, ">/dev/null";
     my ($fh, $file) = tmpnam();
     print {$fh} $self->{document};
     close $fh;
-    local $/;
-    $self->{document} = `tidy -q -utf8 -asxhtml -numeric < $file`;
+    $self->{document} = `tidy -q -utf8 -asxhtml -numeric -wrap 160 < $file`;
     unlink $file;
 }
 
