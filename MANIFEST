@@ -1,3 +1,4 @@
+bin/fearperl
 Changes
 inc/Module/AutoInstall.pm
 inc/Module/Install.pm
@@ -8,6 +9,7 @@ inc/Module/Install/Fetch.pm
 inc/Module/Install/Include.pm
 inc/Module/Install/Makefile.pm
 inc/Module/Install/Metadata.pm
+inc/Module/Install/Scripts.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
 lib/FEAR/API.pm
@@ -62,6 +64,7 @@ slides/en/slides/slide28.html
 slides/en/slides/slide29.html
 slides/en/slides/slide30.html
 slides/en/slides/slide31.html
+slides/en/slides/slide32.html
 slides/en/slides/slide3a.html
 slides/en/slides/slide3b.html
 slides/en/slides/slide4.html
@@ -121,6 +124,7 @@ slides/zh_TW/slides/slide28.html
 slides/zh_TW/slides/slide29.html
 slides/zh_TW/slides/slide30.html
 slides/zh_TW/slides/slide31.html
+slides/zh_TW/slides/slide32.html
 slides/zh_TW/slides/slide3a.html
 slides/zh_TW/slides/slide3b.html
 slides/zh_TW/slides/slide4.html
@@ -181,3 +185,4 @@ t/urlhistory.t
 t/use_base.t
 t/use_referer.t
 t/utf8.t
+t/xhtml.t

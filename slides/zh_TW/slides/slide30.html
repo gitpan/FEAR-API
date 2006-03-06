@@ -3,7 +3,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>TO DO</title>
+<title>在命令列使用 FEAR::API</title>
 <meta name="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="Spork v0.20" />
 <link rel='icon' href='favicon.png' />
@@ -179,15 +179,11 @@ document.onkeypress = handleKey
 <div id="content">
 <div class="top_spacer"></div>
 
-<h2>TO DO</h2>
-<ul>
-<li>和 DBIx::Class, Class::DBI ... 等等的模組結合</li>
-<li>程式碼重整及清理</li>
-<li>更多測試</li>
-<li>補齊文件</li>
-<li>發展更多 method</li>
-</ul>
+<h2>在命令列使用 FEAR::API</h2>
+<pre class="formatter_pre">fearperl -e &#39;fetch&#40;&#34;google.com&#34;&#41;&#39;
 
+perl -M&#39;FEAR::API -base&#39; -e &#39;fetch&#40;&#34;google.com&#34;&#41;&#39;
+</pre>
 
 </div>
 <!-- BEGIN bottom -->

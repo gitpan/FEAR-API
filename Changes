@@ -100,3 +100,6 @@
 	- Behavior of coderef in dispatch_links is changed. $_ defaults to
           $self, and the first argument is a matched link.
 
+0.475  Mon, 06 Mar 2006 16:53:31 +0800
+
+	- Add bin/fearperl

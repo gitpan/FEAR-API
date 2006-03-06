@@ -408,6 +408,13 @@ Use with -base, and $_ will be set to FEAR::API.
    # ..., etc.
 
 ----
+== Use FEAR::API in command line
+
+    fearperl -e 'fetch("google.com")'
+
+    perl -M'FEAR::API -base' -e 'fetch("google.com")'
+
+----
 == TO DO
 
 * Integrate with DBIx::Class, Class::DBI, etc.

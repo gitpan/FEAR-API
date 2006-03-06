@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.474';
+our $VERSION = '0.475';
 
 use utf8;
 our @EXPORT
@@ -370,7 +370,7 @@ chain random_delay => 1;                 # Interval of random delays, in seconds
 chain fetch_delay => 1;                  # The mininum delay between fetchings, in seconds
 chain quiet => 0;                        # Turn on/off warnings
 chain max_fetching_count => 0;           # Maximum number of fetching
-chain auto_add_fields => 1;              # Auto-add fields to results, such as 'url'
+chain auto_append_url => 1;              # Auto-append url to results
 chain parallel => 0;                     # Use/Don't use parallel fetching
 
 
@@ -813,7 +813,7 @@ chain_sub extract {
     }
 #    print Dumper $self->{extresult};
     foreach my $r (@{$self->{extresult}}){
-	$r->{url} = $self->current_url if $self->{auto_add_fields} && !$r->{url};
+	$r->{url} = $self->current_url if $self->{auto_append_url} && !$r->{url};
     }
 }
 
@@ -1286,7 +1286,7 @@ More documentation will come sooooooner or later.
       >> [
           qr(^http:) => _self,
           qr(google) => \my @l,
-          qr(google) => sub {  print ">>>".$_->[0],$/ }
+          qr(google) => sub {  print ">>>".$_[0]->[0],$/ }
          ];
     $_->() while $_;
     print Dumper \@l;
@@ -1297,7 +1297,7 @@ More documentation will come sooooooner or later.
     ->report_links(
                    qr(^http:) => _self,
                    qr(google) => \my @l,
-                   qr(google) => sub {  print ">>>".$_->[0],$/ }
+                   qr(google) => sub {  print ">>>".$_[0]->[0],$/ }
                   );
     fetch while has_more_urls;
     print Dumper \@l;
@@ -1310,7 +1310,7 @@ More documentation will come sooooooner or later.
       >> {
           qr(^http:) => _self,
           qr(google) => \my @l,
-          qr(google) => sub {  print ">>>".$_->[0],$/ }
+          qr(google) => sub {  print ">>>".$_[0]->[0],$/ }
          };
     $_->() while $_;
     print Dumper \@l;
@@ -1322,7 +1322,7 @@ More documentation will come sooooooner or later.
     ->report_links(
                    qr(^http:) => _self,
                    qr(google) => \my @l,
-                   qr(google) => sub {  print ">>>".$_->[0],$/ }
+                   qr(google) => sub {  print ">>>".$_[0]->[0],$/ }
                   );
     fetch while has_more_urls;
     print Dumper \@l;
@@ -1418,7 +1418,7 @@ More documentation will come sooooooner or later.
        | _result_filter(use => "decode_entities", qw(rec))
     print Dumper \@$_;
 
-=head1 Convert HTML to XHTML
+=head2 Convert HTML to XHTML
 
 
     print fetch("google.com")->document->html_to_xhtml->as_string;
@@ -1426,13 +1426,21 @@ More documentation will come sooooooner or later.
     fetch("google.com") | _to_xhtml;
     print $$_;
 
-=head1 Select content of interest using XPath
+=head2 Select content of interest using XPath
 
     print fetch("google.com")->document->html_to_xhtml->xpath('/html/body/*/form')->as_string;
 
     fetch("google.com") | _to_xhtml | _xpath('/html/body/*/form');
     print $$_;
     
+
+=head1 Use FEAR::API in one-liners
+
+
+    fearperl -e 'fetch("google.com")'
+
+    perl -M'FEAR::API -base' -e 'fetch("google.com")'
+
 
 =head1 AUTHOR & COPYRIGHT
 

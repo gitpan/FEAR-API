@@ -403,6 +403,13 @@ presentation_date:
    # ..., etc.
 
 ----
+== 在命令列使用 FEAR::API
+
+    fearperl -e 'fetch("google.com")'
+
+    perl -M'FEAR::API -base' -e 'fetch("google.com")'
+
+----
 == TO DO
 
 * 和 DBIx::Class, Class::DBI ... 等等的模組結合

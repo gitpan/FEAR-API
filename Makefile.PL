@@ -33,7 +33,7 @@ requires  ('XML::XPath');
 requires  ('YAML');
 
 build_requires  ('Test::More');
-
+install_script  ('bin/fearperl');
 auto_install();
 
 &WriteAll;
