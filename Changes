@@ -103,3 +103,7 @@
 0.475  Mon, 06 Mar 2006 16:53:31 +0800
 
 	- Add bin/fearperl
+
+0.476  Mon, 06 Mar 2006 23:32:22 +0800
+
+	- Use perl in fearperl

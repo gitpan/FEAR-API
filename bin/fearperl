@@ -1,3 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env perl
 
-exec perl -Mstrict -M'FEAR::API -base' $@
+#print +("perl -Mstrict -M'FEAR::API -base' ".join q//, map{"'$_' "} @ARGV),$/;
+exec("perl -Mstrict -M'FEAR::API -base' ".join q//, map{"'$_' "} @ARGV);
