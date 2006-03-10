@@ -6,6 +6,7 @@ use utf8;
 use Switch;
 use Template::Extract;
 use Regexp::Bind qw(bind global_bind);
+use Text::CSV;
 use Data::Dumper;
 
 sub new {
@@ -13,8 +14,6 @@ sub new {
     my $method = shift;
     if(ref($_[0])){
 	$method = shift;
-    }
-    else {
     }
     bless {
 	method => $method,
@@ -28,11 +27,14 @@ sub new_all {
     qw(
        Regexp::GlobalBind
        Template::Extract
+       Text::CSV
        ),
        ;
 }
 
 my $te = Template::Extract->new;
+my $csv = Text::CSV->new;
+
 sub extract {
     my $self = shift;
     my %arg = @_;
@@ -56,6 +58,36 @@ sub extract {
 	}
 	case 'Regexp::GlobalBind' {
 	    $r = global_bind($document, qr($template)s );
+	}
+	case 'Text::CSV::Array' {
+	    my $i = 0;
+	    foreach my $line (split /\n+/, $document){
+		if($csv->parse($line)){
+		    for my $column ($csv->fields){
+			push @{$r->[$i]}, $column;
+		    }
+		}
+		$i++;
+	    }
+	    $r ;
+	}
+	case /^Text::CSV(?:::Hash)?$/ {
+	    my $i = 0;
+	    my @field_name;
+	    if($csv->parse($template)){
+		@field_name = $csv->fields;
+	    }
+	    foreach my $line (split /\n+/, $document){
+		if($csv->parse($line)){
+		    my $count = 0;
+		    for my $column ($csv->fields){
+			$r->[$i]->{@field_name ? $field_name[$count] : $count} = $column;
+			$count++;
+		    }
+		}
+		$i++;
+	    }
+	    $r ;
 	}
 	else {
 	    die "Unknown extraction method is given.\n";

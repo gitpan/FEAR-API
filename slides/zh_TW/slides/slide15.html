@@ -180,8 +180,7 @@ document.onkeypress = handleKey
 <div class="top_spacer"></div>
 
 <h2>儲存google 首頁上的連結</h2>
-<pre class="formatter_pre">url&#40;&#34;google.com&#34;&#41;-&gt;&#40;&#41; &gt;&gt; _self;
-$_ | _save_as_tree&#40;&#34;./root&#34;&#41;;
+<pre class="formatter_pre">url&#40;&#34;google.com&#34;&#41;-&gt;&#40;&#41; &gt;&gt; _self | _save_as_tree&#40;&#34;./root&#34;&#41;;
 $_-&gt;&#40;&#41; | _save_as_tree&#40;&#34;./root&#34;&#41; while $_;
 </pre>
 

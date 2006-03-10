@@ -202,26 +202,21 @@ presentation_date:
 ----
 == 儲存google 首頁上的連結
 
-    url("google.com")->() >> _self;
-    $_ | _save_as_tree("./root");
+    url("google.com")->() >> _self | _save_as_tree("./root");
     $_->() | _save_as_tree("./root") while $_;
 
 
 ----
 == 遞迴的從google 抓取網頁
 
-    url("google.com")->() >> _self;
+    url("google.com");
     &$_ >> _self while $_;
 
 ----
 == 遞迴的從google 抓取網頁並存入檔案
 
-    url("google.com")->() >> _self;
-    $_ | _save_as_tree("./root");
-    while($_){
-      &$_ | _save_as_tree("./root");
-      $_ >> _self;
-    }
+    url("google.com");
+    &$_ >> _self | _save_as_tree("./root") while $_;
 
 ----
 == 跟隨google 首頁上的第二個連結

@@ -27,6 +27,7 @@ requires  ('Regexp::Common');
 requires  ('Spiffy');
 requires  ('Template');
 requires  ('Template::Extract');
+requires  ('Text::CSV');
 requires  ('Tie::ShareLite');
 requires  ('WWW::Mechanize');
 requires  ('XML::XPath');

@@ -180,12 +180,8 @@ document.onkeypress = handleKey
 <div class="top_spacer"></div>
 
 <h2>Recursively get web pages from Google</h2>
-<pre class="formatter_pre">url&#40;&#34;google.com&#34;&#41;-&gt;&#40;&#41; &gt;&gt; _self;
-$_ | _save_as_tree&#40;&#34;./root&#34;&#41;;
-while&#40;$_&#41;{
-  &#38;$_ | _save_as_tree&#40;&#34;./root&#34;&#41;;
-  $_ &gt;&gt; _self;
-}
+<pre class="formatter_pre">url&#40;&#34;google.com&#34;&#41;;
+&#38;$_ &gt;&gt; _self | _save_as_tree&#40;&#34;./root&#34;&#41; while $_;
 </pre>
 
 </div>

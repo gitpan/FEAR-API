@@ -107,3 +107,11 @@
 0.476  Mon, 06 Mar 2006 23:32:22 +0800
 
 	- Use perl in fearperl
+
+0.477  Fri, 10 Mar 2006 12:38:54 +0800
+
+	- Solved problem in save_as_tree()  [ note: forgot to use uri_escape() ]
+	- Use eval in converting encodings.
+	- Add extmethods Text::CSV::Hash and Text::CSV::Array.
+	- Now, items of extracted results can be arrays.
+	- Add unshift_link(), unshift_all_links(), unshift_local_links()

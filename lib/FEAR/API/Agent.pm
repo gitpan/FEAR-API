@@ -16,8 +16,14 @@ sub new() {
 use Encode;
 use HTML::Encoding 'encoding_from_http_message';
 sub _convert_to_utf8 {
-    my $enc = encoding_from_http_message($self->res);
-    $self->{content} = decode($enc => $self->content);
+    if($self->res){
+#	use Data::Dumper;
+#	print Dumper $self->res;
+	eval {
+	    my $enc = encoding_from_http_message($self->res);
+	    $self->{content} = decode($enc => $self->content);
+	}
+    }
 }
 
 sub get_content {
@@ -25,9 +31,11 @@ sub get_content {
   my $url = shift;
   $self->get($url);
   if( $self->res->is_success ){
-    $self->_convert_to_utf8;
-    # Since document is translated to UTF-8, so links MUST be re-extracted
-    $self->_extract_links();
+    if( $self->res->content_type =~ /text/o){
+      $self->_convert_to_utf8;
+      # Since document is translated to UTF-8, so links MUST be re-extracted
+      $self->_extract_links();
+    }
     return $self->content;
   }
 }

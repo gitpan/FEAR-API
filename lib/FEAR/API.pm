@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.476';
+our $VERSION = '0.477';
 
 use utf8;
 our @EXPORT
@@ -80,6 +80,7 @@ use Tie::ShareLite qw( :lock );
 use URI;
 use URI::Split;
 use URI::WithBase;
+use URI::Escape;
 use YAML;
 
 #================================================================================
@@ -131,7 +132,7 @@ sub ol_dispatch_links {
   elsif($ref eq 'FEAR::API'){
     push @{$_[0]->{url}}, $self->links;
   }
-  elsif($ref eq 'IO::All::File'){ # however, this is not about links
+  elsif($ref eq 'IO::All'){ # however, this is not about links
     $_[0]->append($self->document->as_string);
   }
   elsif($_[0] eq _feedback){
@@ -241,7 +242,7 @@ chain_sub ol_redirect_to {
   if($ref eq 'ARRAY'){
     push @{$_[0]}, $self->document->as_string
   }
-  elsif($ref eq 'IO::All::File'){
+  elsif($ref eq 'IO::All'){
     $_[0]->print($self->document->as_string);
   }
   else {
@@ -337,7 +338,7 @@ field postproc_prefix => '
 sub ($) {
   my $data = shift;
   foreach (@$data) {
-      foreach my $k (keys %$_){
+      foreach my $k (ref($_) eq q(HASH) ? keys %$_ : @$_){
         $_->{$k} =~ s/^\s*//;
         $_->{$k} =~ s/\s*$//;
       }
@@ -345,7 +346,7 @@ sub ($) {
 
 field postproc_postfix => '
   }
-  $data = [ grep {%$_} @$data ];
+  $data = [ grep {ref($_) eq q(HASH) ? %$_ : @$_} @$data ];
   return $data;
 }
 ';
@@ -813,7 +814,9 @@ chain_sub extract {
     }
 #    print Dumper $self->{extresult};
     foreach my $r (@{$self->{extresult}}){
-	$r->{url} = $self->current_url if $self->{auto_append_url} && !$r->{url};
+	if(ref($r) eq 'HASH'){
+	    $r->{url} = $self->current_url if $self->{auto_append_url} && !$r->{url};
+	}
     }
 }
 
@@ -920,7 +923,17 @@ chain_sub report_links {
     foreach my $item ($self->links){
       for (my $i= 0; $i<$#dispatch_table; $i+=2){
 	my ($pattern, $action) = @dispatch_table[$i, $i+1];
-	if($item->url =~ m($pattern) && !$self->urlhistory->has($item->url) ){
+	print $pattern;
+	print ref $pattern;
+	if(
+#	   ( (ref($pattern) eq 'CODE' && $pattern->($item)) || 
+#	     (ref($pattern) eq 'Regexp' &&
+ $item->url =~ m($pattern)
+#) 
+#)
+	   &&
+	   !$self->urlhistory->has($item->url) ){
+
 	  if($action eq _feedback){
 	    if(!$self->value('allow_duplicate') &&
 	       !$self->urlhistory->has($item->url)){
@@ -932,7 +945,8 @@ chain_sub report_links {
 	    &print( Dumper $item);
 	  }
 	  elsif(ref $action eq 'ARRAY'){
-	    push @{$action}, $item;
+	      print 'PUSH'.$/;
+	    push @{$action}, dclone $item;
 	  }
 	  elsif(ref $action eq 'HASH'){
 	    $action->{$item} = 1;
@@ -950,20 +964,33 @@ chain_sub report_links {
     $self->uniq($self->{url});
 }
 
-
+########################################
 # Shortcut for 'feedback' with report_links()
+########################################
 chain_sub push_link {
   push
     @{$self->{url}},
       ($self->links)[
-		     shift   # Just push the first link if no index is given 
+		     @_ # Just feed back the first link if no index is given 
 		     ||
 		     0];
 }
 
+chain_sub unshift_link {
+  unshift
+      @{$self->{url}},
+      ($self->links)[
+                     @_
+                     ||
+                     0];
+}
 
 
+
+
+########################################
 # Shortcut for feeding back all links
+########################################
 chain_sub push_all_links {
   push @{$self->{url}}, $self->links;
 }
@@ -972,9 +999,18 @@ chain_sub push_local_links {
   push @{$self->{url}}, grep{$_->is_local_link} $self->links;
 }
 
+chain_sub unshift_all_links {
+  unshift @{$self->{url}}, $self->links;
+}
 
+chain_sub unshift_local_links {
+  unshift @{$self->{url}}, grep{$_->is_local_link} $self->links;
+}
+
+########################################
 # Usage:
 # absolutize_url(qw(field1 field2));
+########################################
 chain_sub absolutize_url {
     foreach my $field (@_){
 	foreach my $r (@{$self->{extresult}}){
@@ -1139,13 +1175,16 @@ chain_sub save_as_tree {
     my $root = shift || '.';
     my ($scheme, $auth, $path, $query, $frag) 
 	= URI::Split::uri_split($self->current_url);
-#    print "($scheme, $auth, $path, $query, $frag) \n";
+    print "($scheme, $auth, $path, $query, $frag) \n";
     my (undef, $dir, $file) = splitpath($path);
 #    print join q/ /, splitpath($path),$/;
 #    print "mkdir ".catfile($root, $auth, $dir).$/;
 #    print "write doc to ".catfile($root, $auth, $dir, $file.'?'.$query).$/;
     mkpath([catfile($root, $auth, $dir)],0,0755);
-    open my $f, '>', catfile($root, $auth, $dir, $file.'?'.$query) or croak $!;
+    my $content_file = 
+	catfile($root, $auth, $dir, ($file?$file:'index.html') . ($query?'?'.uri_escape($query):''));
+    print $content_file.$/;
+    open my $f, '>', $content_file or croak $!;
     binmode $f;
     print {$f} $self->document->as_string;
 }
@@ -1186,7 +1225,7 @@ FEAR::API - There's no fear with this elegant site scraper
 =head1 DESCRIPTION
 
 FEAR::API is a tool that helps reduce your time creating site scraping
-scripts and help you do it in an much more elegant way. FEAR::API
+scripts and help you do it in a much more elegant way. FEAR::API
 combines many strong and powerful features from various CPAN modules,
 such as LWP::UserAgent, WWW::Mechanize, Template::Extract, Encode,
 HTML::Parser, etc. and digests them into a deeper Zen.
@@ -1218,7 +1257,7 @@ More documentation will come sooooooner or later.
 
 =head2 Fetch a page and save it to a file
 
-    getstore("google.com");
+    getstore("google.com", 'google.html');
 
     url("google.com")->() | _save_as("google.html");
     
@@ -1231,21 +1270,19 @@ More documentation will come sooooooner or later.
 
 =head2 Save links in Google's homepage
 
-    (url("google.com")->() >> _self) | _save_as_tree("./root");
+    url("google.com")->() >> _self | _save_as_tree("./root");
     $_->() | _save_as_tree("./root") while $_;
 
 
 =head2 Recursively get web pages from Google
 
-    url("google.com")->() >> _self;
+    url("google.com");
     &$_ >> _self while $_;
 
 =head2 Recursively get web pages from Google
 
-    (url("google.com")->() >> _self) | _save_as_tree("./root");
-    while($_){
-      (&$_ | _save_as_tree("./root")) >> _self;
-    }
+    url("google.com");
+    &$_ >> _self | _save_as_tree("./root") while $_;
 
 =head2 Follow the second link of Google
 
@@ -1417,6 +1454,12 @@ More documentation will come sooooooner or later.
        | _result_filter(use => "html_to_null",    qw(rec));
        | _result_filter(use => "decode_entities", qw(rec))
     print Dumper \@$_;
+
+=head2 Scraping a file
+
+    file('some_file');
+
+    url('file:///the/path/to/your/file');
 
 =head2 Convert HTML to XHTML
 
