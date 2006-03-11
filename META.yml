@@ -37,4 +37,4 @@ requires:
   WWW::Mechanize: 0
   XML::XPath: 0
   YAML: 0
-version: 0.477
+version: 0.478

@@ -3,6 +3,7 @@ use strict;
 use Spiffy -base;
 use FEAR::API::SourceFilter;
 use WWW::Mechanize;
+use Carp;
 our @ISA = qw(WWW::Mechanize);
 
 sub new() {
@@ -26,12 +27,18 @@ sub _convert_to_utf8 {
     }
 }
 
+sub force_content_type {
+    $self->{forced_ct} = shift;
+}
+
 sub get_content {
   use Text::Iconv;
   my $url = shift;
   $self->get($url);
   if( $self->res->is_success ){
+#      print $self->res->content_type,$/;
     if( $self->res->content_type =~ /text/o){
+      $self->{ct} = $self->{forced_ct} if $self->{forced_ct};
       $self->_convert_to_utf8;
       # Since document is translated to UTF-8, so links MUST be re-extracted
       $self->_extract_links();
@@ -60,17 +67,17 @@ sub links {
 
 chain_sub sort_links {
   @{$self->{links}} = 
-    sort {
-      $_[0] ?
-	(
-	 ref($_[0]) eq 'CODE' ?
-	 $_[0]->($a, $b)
-	 :
-	 $a->[$name_to_number{$_[0]}] cmp $b->[$name_to_number{$_[0]}]
-	)
-	  :
+      sort {
+	  $_[0] ?
+	      (
+	       ref($_[0]) eq 'CODE' ?
+	       $_[0]->($a, $b)
+	       :
+	       $a->[$name_to_number{$_[0]}] cmp $b->[$name_to_number{$_[0]}]
+	       )
+	      :
 	      $a->[0] cmp $b->[0]
-	    } @{$self->{links}}
+	  } $self->links;
 }
 
 
@@ -78,30 +85,32 @@ chain_sub keep_links {
   my ($filter, $field);
   if(@_ == 2){
     $filter = $_[1];
-    $field = $_->[$name_to_number{$_[0]}];
+    $field = $name_to_number{$_[0]};
   }
   else {
     $filter = $_[0];
-    $field = $_->[0];
+    $field = 0;
   }
   @{$self->{links}} = grep {
-    ref $filter eq 'CODE' ? $field =~ /$filter/ : $filter->($field);
-  } @{$self->{links}};
+      ref $filter eq 'CODE' ? $filter->($field) : $_->[$field] =~ /$filter/;
+  } $self->links;
 }
 
 chain_sub remove_links {
   my ($filter, $field);
   if(@_ == 2){
     $filter = $_[1];
-    $field = $_->[$name_to_number{$_[0]}];
+    $field = $name_to_number{$_[0]};
   }
   else {
     $filter = $_[0];
-    $field = $_->[0];
+    $field = 0;
   }
   @{$self->{links}} = grep {
-    ref $filter eq 'CODE' ? $field !~ /$filter/ : !$filter->($field);
-  } @{$self->{links}};
+      not (
+	   ref $filter eq 'CODE' ? $filter->($field) : $_->[$field] =~ /$filter/
+	   );
+  } $self->links;
 }
 
 

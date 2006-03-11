@@ -14,6 +14,7 @@ sub fetch {
 }
 
 sub extract_title {
+  $f->auto_append_url(1);
   $f  | _preproc ( 's/BBC/CBB/sig')
       | _template('<title>[% title %]</title>')
       | _postproc( '$_->{url} =~ s/http/ftp/')

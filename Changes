@@ -115,3 +115,14 @@
 	- Add extmethods Text::CSV::Hash and Text::CSV::Array.
 	- Now, items of extracted results can be arrays.
 	- Add unshift_link(), unshift_all_links(), unshift_local_links()
+
+0.478  Sun, 12 Mar 2006 00:15:56 +0800
+
+        - Bug fix for keep_links() and remove_links().
+        - Bug that push_document() and pop_document() cannot restore original document
+          has been solved.
+        - Fix bug of coderef pattern in dispatch_links
+        - Add visit_tree()
+        - 'auto_append_url' defaults to OFF now. Use append_url() to do it manually.
+        - Add force_content_type()
+        - Update tests

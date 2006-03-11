@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.477';
+our $VERSION = '0.478';
 
 use utf8;
 our @EXPORT
@@ -316,7 +316,6 @@ field 'extresult';
 field 'urlhistory';
 field 'dup';
 field 'inline_files';
-field 'form';
 field fetching_count => 0;               # Count of fetchings
 field 'error';                           # Contains error information
 field document => FEAR::API::Document->new();
@@ -324,6 +323,7 @@ alias doc => 'document';
 
 my $wua = FEAR::API::Agent->new();
 field wua => $wua;                     # Web user agent
+alias ua => 'wua';
 
 field preproc_prefix => '
 sub ($) {
@@ -371,8 +371,9 @@ chain random_delay => 1;                 # Interval of random delays, in seconds
 chain fetch_delay => 1;                  # The mininum delay between fetchings, in seconds
 chain quiet => 0;                        # Turn on/off warnings
 chain max_fetching_count => 0;           # Maximum number of fetching
-chain auto_append_url => 1;              # Auto-append url to results
 chain parallel => 0;                     # Use/Don't use parallel fetching
+chain auto_append_url => 0;              # Auto-append url to results. Default is Off.
+                                         # Call append_url() to append manually.
 
 
 #======================================================================
@@ -734,7 +735,8 @@ chain_sub pfetch {
 	    $self->fetch($link);
 	    if( ref $callback ){
 		$self->shared_handle->lock(LOCK_EX);
-		&$callback($self);
+                local $_ = $self;
+		&$callback();
 		$self->shared_handle->unlock;
 	    }
 	    $self->parallel(0);
@@ -764,12 +766,13 @@ chain_sub stop_join {
 }
 
 chain_sub push_document {
-    push @{$self->{document_stack}}, [ freeze($self->{wua}), $self->{document} ];
+    push @{$self->{document_stack}}, [ freeze($self->{wua}), freeze($self->{document}) ];
 }
 
 chain_sub pop_document {
     ($self->{wua}, $self->{document}) = @{pop @{$self->{document_stack}}};
     $self->{wua} = thaw $self->{wua};
+    $self->{document} = thaw $self->{document};
 }
 
 sub _invoke_extractor {
@@ -813,9 +816,13 @@ chain_sub extract {
 	$self->extresult($self->_invoke_extractor);
     }
 #    print Dumper $self->{extresult};
+    $self->append_url if $self->{auto_append_url};
+}
+
+chain_sub append_url {
     foreach my $r (@{$self->{extresult}}){
 	if(ref($r) eq 'HASH'){
-	    $r->{url} = $self->current_url if $self->{auto_append_url} && !$r->{url};
+	    $r->{url} = $self->current_url;
 	}
     }
 }
@@ -923,20 +930,11 @@ chain_sub report_links {
     foreach my $item ($self->links){
       for (my $i= 0; $i<$#dispatch_table; $i+=2){
 	my ($pattern, $action) = @dispatch_table[$i, $i+1];
-	print $pattern;
-	print ref $pattern;
-	if(
-#	   ( (ref($pattern) eq 'CODE' && $pattern->($item)) || 
-#	     (ref($pattern) eq 'Regexp' &&
- $item->url =~ m($pattern)
-#) 
-#)
-	   &&
-	   !$self->urlhistory->has($item->url) ){
-
+	if( (ref($pattern) eq 'CODE' && do { local $_ = $item; $pattern->() } )
+             ||
+	    $item->url =~ m($pattern)){
 	  if($action eq _feedback){
-	    if(!$self->value('allow_duplicate') &&
-	       !$self->urlhistory->has($item->url)){
+	    if($self->value('allow_duplicate') || !$self->urlhistory->has($item->url)){
 	      &print( "   Feed back [".$item->text."] ".$item->url."\n");
 	      push @{$self->{url}}, $item;
 	    }
@@ -945,7 +943,6 @@ chain_sub report_links {
 	    &print( Dumper $item);
 	  }
 	  elsif(ref $action eq 'ARRAY'){
-	      print 'PUSH'.$/;
 	    push @{$action}, dclone $item;
 	  }
 	  elsif(ref $action eq 'HASH'){
@@ -1152,6 +1149,11 @@ chain_sub submit_form {
   $self->sync_document;
 }
 
+
+sub force_content_type {
+  $self->wua->force_content_type(@_);
+}
+
 sub title {
   $self->wua->title;
 }
@@ -1175,7 +1177,7 @@ chain_sub save_as_tree {
     my $root = shift || '.';
     my ($scheme, $auth, $path, $query, $frag) 
 	= URI::Split::uri_split($self->current_url);
-    print "($scheme, $auth, $path, $query, $frag) \n";
+#    print "($scheme, $auth, $path, $query, $frag) \n";
     my (undef, $dir, $file) = splitpath($path);
 #    print join q/ /, splitpath($path),$/;
 #    print "mkdir ".catfile($root, $auth, $dir).$/;
@@ -1183,10 +1185,22 @@ chain_sub save_as_tree {
     mkpath([catfile($root, $auth, $dir)],0,0755);
     my $content_file = 
 	catfile($root, $auth, $dir, ($file?$file:'index.html') . ($query?'?'.uri_escape($query):''));
-    print $content_file.$/;
+#    print $content_file.$/;
     open my $f, '>', $content_file or croak $!;
     binmode $f;
     print {$f} $self->document->as_string;
+}
+
+chain_sub visit_tree {
+    my @path = ref($_[0]) eq 'ARRAY' ? @{$_[0]} : ($_[0]);
+    my $coderef = $_[1];
+    local $_ = $self;
+    foreach my $path (@path){
+	foreach my $p (io($path)->All){
+	    next if "$p" eq 'dir';
+	    $coderef->($p);
+	}
+    }
 }
 
 
