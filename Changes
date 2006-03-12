@@ -126,3 +126,8 @@
         - 'auto_append_url' defaults to OFF now. Use append_url() to do it manually.
         - Add force_content_type()
         - Update tests
+
+0.479  Sun, 12 Mar 2006 10:02:50 +0800
+
+	- Add filter 'remove_attributes'
+
