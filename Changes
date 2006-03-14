@@ -131,3 +131,6 @@
 
 	- Add filter 'remove_attributes'
 
+0.480  Tue, 14 Mar 2006 09:18:22 +0800
+
+	- Add support for Class::DBI and DBIx::Class::CDBICompat in invoke_handler()

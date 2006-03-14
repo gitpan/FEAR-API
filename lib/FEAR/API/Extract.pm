@@ -89,6 +89,8 @@ sub extract {
 	    }
 	    $r ;
 	}
+	case 'XML::XPath' {
+	}
 	else {
 	    die "Unknown extraction method is given.\n";
 	}

@@ -354,6 +354,13 @@ spend shorter time and write the least amount of code to come up to the same req
        | _result_filter(q($_->{rec} =~ s/<.+?>//g));
     invoke_handler('Data::Dumper');
 
++
+You can also put extracted results straight into relational databases.
+
+    invoke_handler('Some::Module::based::on::Class::DBI');
+
+    invoke_handler('Some::Module::based::on::DBIx::Class::CDBICompat');
+
 ----
 == Preprocess document
 
@@ -412,7 +419,6 @@ Use with -base, and $_ will be set to FEAR::API.
 ----
 == TO DO
 
-* Integrate with DBIx::Class, Class::DBI, etc.
 * Code refactoring and cleaning
 * Add more tests
 * Patch documents

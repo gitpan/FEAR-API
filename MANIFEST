@@ -58,6 +58,7 @@ slides/en/slides/slide25b.html
 slides/en/slides/slide25c.html
 slides/en/slides/slide25d.html
 slides/en/slides/slide25e.html
+slides/en/slides/slide25f.html
 slides/en/slides/slide26.html
 slides/en/slides/slide27.html
 slides/en/slides/slide28.html
@@ -118,6 +119,7 @@ slides/zh_TW/slides/slide25b.html
 slides/zh_TW/slides/slide25c.html
 slides/zh_TW/slides/slide25d.html
 slides/zh_TW/slides/slide25e.html
+slides/zh_TW/slides/slide25f.html
 slides/zh_TW/slides/slide26.html
 slides/zh_TW/slides/slide27.html
 slides/zh_TW/slides/slide28.html
@@ -147,6 +149,9 @@ slides/zh_TW/template/tt2/slide.html
 slides/zh_TW/template/tt2/start.html
 slides/zh_TW/template/tt2/top.html
 t/agent_alias.t
+t/data/cpan.db
+t/data/CPAN/DBI.pm
+t/data/schema.sql
 t/data/url_list
 t/document_mime.t
 t/document_type.t
@@ -156,6 +161,7 @@ t/fetch_and_append.t
 t/file_mmagic.t
 t/follow_link.t
 t/get_and_post.t
+t/invoke_cdbi_handler.t
 t/io-all.t
 t/join_results.t
 t/keep_links.t

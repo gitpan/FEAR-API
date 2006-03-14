@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.479';
+our $VERSION = '0.480';
 
 use utf8;
 our @EXPORT
@@ -410,31 +410,46 @@ sub print {
 
 # Set the third-party data handler
 chain_sub handler {
-    return $self if defined($_[0]) && $self->{handler} && $_[0] eq $self->{handler};
+    my $handler = $_[0];
+    return $self if defined($handler) && $self->{handler} && $handler eq $self->{handler};
     no strict 'refs';
-    if($_[0]){
-	if(ref($_[0]) eq 'CODE'){
-	    $self->{handler} = $_[0];
+    if($handler){
+	if(ref($handler) eq 'CODE'){
+	    $self->{handler} = $handler;
 	}
-	elsif(ref($_[0]) eq 'ARRAY') {
-	    $self->{handler} = sub { push @{$_[0]}, shift };
+	elsif(ref($handler) eq 'ARRAY') {
+	    $self->{handler} = sub { push @{$handler}, shift };
 	}
-	elsif(ref($_[0]) eq 'SCALAR') {
-	    $self->{handler} = sub { ${$_[0]} = shift };
+	elsif(ref($handler) eq 'SCALAR') {
+	    $self->{handler} = sub { ${$handler} = shift };
 	}
-	elsif($_[0] eq 'Data::Dumper'){
+	elsif($handler eq 'Data::Dumper'){
 	    $self->{handler} = sub { &print(Dumper shift) };
 	}
-	elsif($_[0] eq 'YAML'){
+	elsif($handler eq 'YAML'){
 	    $self->{handler} = sub { &print( YAML::Dump shift) };
 	}
 	else{
-	    # If the handler's namespace cannot be seen
-	    if(!%{$_[0].'::'}){
-		eval "require $_[0]";
-		croak $@ if $@;
+	    # If the handler's namespace cannot be seen, then try to load it
+	    my $class = ref($handler) || $handler;
+	    if(!%{$class.'::'}){
+		if(not ref $_[0]){
+		    eval "require $class;";
+		    croak $@ if $@;
+		}
 	    }
-	    $self->{handler} = \&{$_[0] . '::' . ($_[1] ? $_[1] : 'process') };
+	    if(
+	       (ref($handler) &&
+		(ref($handler)->isa('Class::DBI') or ref($handler)->isa('DBIx::Class::CDBICompat')))
+	       ||
+	       ($handler->isa('Class::DBI') or $handler->isa('DBIx::Class::CDBICompat'))
+	       ){
+		$self->{handler} = sub { $handler->find_or_create(shift()) };
+		return;
+	    }
+	    else {
+		$self->{handler} = \&{$handler . '::' . ($_[1] ? $_[1] : 'process') };
+	    }
 	}
     }
 }
@@ -445,7 +460,6 @@ chain_sub invoke_handler {
     $self->handler($handler) if $handler;
     croak "Please set handler first" if not defined $self->{handler};
     if(ref $self->{extresult}) {
-      local $_;
       foreach (@{$self->{extresult}}){
 	&{$self->{handler}}($_, @_);
       }
@@ -1448,6 +1462,15 @@ More documentation will come sooooooner or later.
        | _result_filter(q($_->{rec} =~ s/<.+?>//g));
     invoke_handler('Data::Dumper');
 
+
+=head2 Forward extracted data to relational database
+
+    template($template);
+    extract;
+    invoke_handler('Some::Module::based::on::Class::DBI');
+    # or
+    invoke_handler('Some::Module::based::on::DBIx::Class::CDBICompat');
+
 =head2 Preprocess document
 
     url("google.com")->()
@@ -1489,7 +1512,6 @@ More documentation will come sooooooner or later.
 
     fetch("google.com") | _to_xhtml | _xpath('/html/body/*/form');
     print $$_;
-    
 
 =head1 Use FEAR::API in one-liners
 

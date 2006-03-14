@@ -350,6 +350,13 @@ presentation_date:
        | _result_filter(q($_->{rec} =~ s/<.+?>//g));
     invoke_handler('Data::Dumper');
 
++
+你也可以直接把抓出來的資料放到關聯式資料庫裡。
+
+    invoke_handler('Some::Module::based::on::Class::DBI');
+
+    invoke_handler('Some::Module::based::on::DBIx::Class::CDBICompat');
+
 ----
 == 文件前處理
 
@@ -407,7 +414,6 @@ presentation_date:
 ----
 == TO DO
 
-* 和 DBIx::Class, Class::DBI ... 等等的模組結合
 * 程式碼重整及清理
 * 更多測試
 * 補齊文件
