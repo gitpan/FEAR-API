@@ -43,7 +43,17 @@ sub filter {
 
   # This is for invoking methods without specifying FEAR::API objects
   s(&know_myself)
-    (q(my $self = ref ($_[0]) =~ /^FEAR::API/o ? shift : $_))mego;
+    (q(
+       my $self = ref ($_[0]) =~ /^FEAR::API/o ? shift : $_;
+       if($ENV{TRANSLATE_FEAR}){
+         my $___this_subname___ = (caller(0))[3];
+#         print $___this_subname___ ,$/;
+         $___this_subname___ =~ s/^.+:://o;
+#         print $___this_subname___ ,$/;
+         $self->__translate($___this_subname___, @_);
+         return;
+       }
+      ))mego;
   
 
   # For debugging

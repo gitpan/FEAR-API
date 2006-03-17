@@ -134,3 +134,10 @@
 0.480  Tue, 14 Mar 2006 09:18:22 +0800
 
 	- Add support for Class::DBI and DBIx::Class::CDBICompat in invoke_handler()
+
+0.480.1  Fri, 17 Mar 2006 12:11:10 +0800
+
+	- Add has_more_links_like()
+
+	- Working on FEAR::API::Recorder
+	- Working on backward code translator.

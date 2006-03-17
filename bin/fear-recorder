@@ -1,0 +1,12 @@
+#!/usr/bin/env perl
+
+use FEAR::API::Recorder;
+use Data::Dumper;
+use Getopt::Long;
+GetOptions(\my %opt,
+	   'level|l=i',
+	   'port|p=i',
+	   'host|h=s',
+	   'outputfile|o=s',
+	  );
+start_recorder(%opt);

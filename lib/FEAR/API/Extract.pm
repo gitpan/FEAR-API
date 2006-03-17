@@ -91,6 +91,8 @@ sub extract {
 	}
 	case 'XML::XPath' {
 	}
+	case 'Perl6::Rules' {
+	}
 	else {
 	    die "Unknown extraction method is given.\n";
 	}

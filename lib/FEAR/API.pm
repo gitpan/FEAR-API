@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.480';
+our $VERSION = '0.480.1';
 
 use utf8;
 our @EXPORT
@@ -76,6 +76,7 @@ use Parallel::ForkManager;
 use Storable qw(dclone freeze thaw);
 use Switch;
 use Template;
+use Text::CSV;
 use Tie::ShareLite qw( :lock );
 use URI;
 use URI::Split;
@@ -377,6 +378,33 @@ chain auto_append_url => 0;              # Auto-append url to results. Default i
 
 
 #======================================================================
+# Translation method
+#======================================================================
+sub __translate(@) {
+    my $self = shift;
+    my $subname = shift;
+    my @rest = @_;
+    switch($subname) {
+	case 'url' {
+	    if(@rest){
+		print 'push @url, '.(join q/, /, map{"'$_'"} @rest).';'.$/;
+	    }
+	}
+	case 'fetch' {
+	    if(@rest){
+		print 'fetch('."'$rest[0]'".');'.$/;
+	    }
+	    else {
+		print 'fetch(shift(@url));'.$/;
+	    }
+	}
+	else {
+	    print $subname,$/
+	}
+    }
+}
+
+#======================================================================
 # Shared memory
 #======================================================================
 
@@ -429,6 +457,35 @@ chain_sub handler {
 	elsif($handler eq 'YAML'){
 	    $self->{handler} = sub { &print( YAML::Dump shift) };
 	}
+	elsif($handler eq 'HashToArray'){
+	  # This handler converts hash-based extresults into array-based results
+	  # This is needed if need to invoke CSV handler
+	    $self->{handler} = sub {
+	      my $result_item = shift;
+	      my $new_result_item;
+#	      $result_item
+	    }
+	}
+#	elsif($handler eq 'CSV'){
+#	  my $outputfile = $_[1];
+#	  $self->{handler} = sub {
+#	    my $result_item = shift;
+#	    my @fields;
+#	    if(ref($result_item) eq 'HASH'){
+#	    @fields = values %$result_item;
+#	    }
+#	    elsif(ref($result_item) eq 'ARRAY'){
+#	    }
+#	  };
+#	  my $csv = Text::CSV->new;
+#	  if ($csv->combine(@fields)) {
+#	    my $string = $csv->string;
+#	    print $string, "\n";
+#	  } else {
+#	    my $err = $csv->error_input;
+#	    cluck "combine() failed on argument: ", $err, "\n";
+#	  }
+#	}
 	else{
 	    # If the handler's namespace cannot be seen, then try to load it
 	    my $class = ref($handler) || $handler;
@@ -453,6 +510,7 @@ chain_sub handler {
 	}
     }
 }
+
 
 chain_sub invoke_handler {
     my $handler;
@@ -687,8 +745,10 @@ chain_sub fetch {
     my $link = shift(@_) || shift @{$self->{url}} || croak "Please input a URL\n";
     my $append_to_document = shift;
 
-    $link = WWW::Mechanize::Link->new($link !~ m(^\w+://) ?
-				      'http://'.$link : $link
+    $link = WWW::Mechanize::Link->new($link !~ m(^\w+://)o ? # if there's no protocol specified
+				      ($link !~ /\./o ?     # if there is no .com, .net stuff
+				       'http://'.$link.'.com' : 'http://'.$link ) 
+				      : $link
 				     ) unless ref $link;
 #    print Dumper $link;
     my $url = $link->url;
@@ -1238,6 +1298,12 @@ alias has_more_links => 'has_more_urls';
 sub has_more_urls { 
     ref($self->{url}) && @{$self->{url}} ?
 	($self->reach_max_fetching_count ? 0 : 1 ) : 0;
+}
+
+alias has_more_links_like => 'has_more_urls_like';
+sub has_more_urls_like {
+    my $pattern = shift;
+    (ref($_) ? $_->[0] : $_) =~ m($pattern) and return 1 foreach @{$self->{url}};
 }
 
 sub list_filters { wantarray ? %$filter_source : $filter_source }

@@ -17,6 +17,8 @@ requires  ('Filter::Simple');
 requires  ('HTML::Encoding');
 requires  ('HTML::Entities');
 requires  ('HTML::LinkExtractor');
+reuiqres  ('HTTP::Proxy');
+reuiqres  ('HTTP::Recorder');
 requires  ('Inline');
 requires  ('Inline::Files');
 requires  ('IO::All');
@@ -35,6 +37,7 @@ requires  ('YAML');
 
 build_requires  ('Test::More');
 install_script  ('bin/fearperl');
+install_script  ('bin/fear-recorder');
 auto_install();
 
 &WriteAll;

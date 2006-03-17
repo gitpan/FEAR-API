@@ -1,3 +1,4 @@
+bin/fear-recorder
 bin/fearperl
 Changes
 inc/Module/AutoInstall.pm
@@ -20,6 +21,7 @@ lib/FEAR/API/Extract.pm
 lib/FEAR/API/Filters.pm
 lib/FEAR/API/Link.pm
 lib/FEAR/API/Log.pm
+lib/FEAR/API/Recorder.pm
 lib/FEAR/API/SourceFilter.pm
 lib/FEAR/API/URLPool.pm
 LICENSE
