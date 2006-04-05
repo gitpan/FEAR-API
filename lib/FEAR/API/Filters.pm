@@ -75,3 +75,48 @@ sub create_filter() {
 
 1;
 __END__
+
+# Below is stub documentation for your module. You better edit it!
+
+=head1 NAME
+
+FEAR::API::Filters - Named filters
+
+=head1 DESCRIPTION
+
+This package contains several preset named filters. You can use them
+to clean or convert documents or results.
+
+The filters include:
+
+
+=head2 strip_html
+
+  It strips html tags and turn them into whitespaces.
+
+=head2 html_to_null
+
+  It strips html tags and turn them into empty string;
+
+=head2 remove_attributes
+
+  It removes attributes in markups.
+
+=head2 remove_commas
+
+=head2 remove_leading_trailing_spaces, remove_lt_spaces
+
+=head2 remove_newlines
+
+=head2 decode_entities
+
+
+
+=head1 COPYRIGHT
+
+Copyright (C) 2006 by Yung-chung Lin (a.k.a. xern) <xern@cpan.org>
+
+This package is free software; you can redistribute it and/or modify
+it under the same terms as Perl i tself
+
+=cut

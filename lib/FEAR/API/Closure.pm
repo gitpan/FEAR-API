@@ -6,9 +6,9 @@ use FEAR::API::SourceFilter;
 use strict;
 no warnings 'redefine';
 our @EXPORT = qw(
-		 field
-		 chain
-		 alias
+		 _field
+		 _chain
+		 _alias
 
 		 @field_subs
 		 @chain_subs
@@ -22,11 +22,13 @@ our @field_subs;
 our @chain_subs;
 
 
+use FEAR::API::Translate;
+
 #================================================================================
 # Closure generation
 #================================================================================
 
-sub field() {
+sub _field() {
     my $package = caller;
     my ($field, $default) = @_;
     no strict 'refs';
@@ -37,7 +39,9 @@ sub field() {
     *{;no strict 'refs';
       \*{"${package}::$field"}} =
 	sub {
-	    &know_myself;
+	    &__know_myself__;
+	    $__this_field__ = $field;
+	    &__translate_and_return__;
 	    $self->{$field} = shift if defined $_[0];
 	    if( not defined $self->{$field} ){
 	      $self->{$field} = $default;
@@ -48,7 +52,7 @@ sub field() {
 }
 
 
-sub chain() {
+sub _chain() {
     my $package = caller;
     my ($field, $default) = @_;
 
@@ -60,7 +64,9 @@ sub chain() {
     *{;no strict 'refs';
       \*{"${package}::$field"}} =
 	sub {
-	    &know_myself;
+	    &__know_myself__;
+	    $__this_field__ = $field;
+	    &__translate_and_return_self__;
 	    $self->{$field} = shift if defined $_[0];
 	    if( not defined $self->{$field} ){
 	      $self->{$field} = $default;
@@ -71,7 +77,7 @@ sub chain() {
 
 
 # Aliases are created for commonly-used subs that are tedious in name
-sub alias($$) {
+sub _alias($$) {
     my $package = caller;
     my ($alias, $sub) = @_;
     no strict 'refs';

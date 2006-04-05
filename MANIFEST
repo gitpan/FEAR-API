@@ -22,7 +22,12 @@ lib/FEAR/API/Filters.pm
 lib/FEAR/API/Link.pm
 lib/FEAR/API/Log.pm
 lib/FEAR/API/Recorder.pm
+lib/FEAR/API/Recorder/FEAR_API.pm
+lib/FEAR/API/Recorder/LWP_Simple.pm
+lib/FEAR/API/Recorder/LWP_UserAgent.pm
 lib/FEAR/API/SourceFilter.pm
+lib/FEAR/API/Translate.pm
+lib/FEAR/API/Translate/Backend.pm
 lib/FEAR/API/URLPool.pm
 LICENSE
 Makefile.PL
@@ -189,6 +194,7 @@ t/skip_document_with_without.t
 t/sort_links.t
 t/submit_form.t
 t/title.t
+t/translate.t
 t/urlhistory.t
 t/use_base.t
 t/use_referer.t

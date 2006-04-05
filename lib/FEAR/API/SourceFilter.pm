@@ -13,15 +13,21 @@ sub filter {
   # A chain_sub is a method that returns
   # itself after its function is done.
   s[^chain_sub\s+(\w+\s*\{)(.*?)^\}]
-    [sub $1\n $2    ;\$self\n}]msg;
+    [chain_sub $1\n $2    ;\$self\n}]msg;
   
   
   # Filters adapted from Spiffy.pm
 
   # Subs with $self auto-created
   s[^sub\s+(\w+)\s+\{(.*\n)]
-    [push \@EXPORT_BASE, '$1';\nsub ${1} {\n&know_myself;$2]gm;
+    [push \@EXPORT_BASE, '$1';\nsub ${1} {\n&__know_myself__;\n&__translate_and_return__;\n$2]gm;
 
+  # Chain Subs with $self auto-created
+  s[^chain_sub\s+(\w+)\s+\{(.*\n)]
+   [push \@EXPORT_BASE, '$1';\nsub ${1} {\n&__know_myself__;\n&__translate_and_return_self__;\n$2]gm;
+
+
+#print $_;
   # Subs without $self auto-created
   s[^sub\s+(\w+)\s*\(\s*\)(\s+\{.*\n)]
     [push \@EXPORT_BASE, '$1';\nsub ${1}${2}]gm;
@@ -42,22 +48,40 @@ sub filter {
     [create_filter '$1' => << 'FEAR_FILTER';\n$2\nFEAR_FILTER\n]msg;
 
   # This is for invoking methods without specifying FEAR::API objects
-  s(&know_myself)
+  s(&__know_myself__)
     (q(
        my $self = ref ($_[0]) =~ /^FEAR::API/o ? shift : $_;
-       if($ENV{TRANSLATE_FEAR}){
-         my $___this_subname___ = (caller(0))[3];
-#         print $___this_subname___ ,$/;
-         $___this_subname___ =~ s/^.+:://o;
-#         print $___this_subname___ ,$/;
-         $self->__translate($___this_subname___, @_);
-         return;
-       }
+       my $__this_field__;
       ))mego;
+
+  my $translate = '
+	 my $___this_subname___ = (caller(0))[3];
+         if($___this_subname___ =~ /__ANON__$/){
+            $___this_subname___ = $__this_field__;
+         }
+         else {
+            $___this_subname___ =~ s/^.+:://o;
+         }
+	 $self->__translate($___this_subname___, @_) 
+                if $___this_subname___ && $self->can(q(__translate));
+         return
+  ';
+
+  s(&__translate_and_return_self__)
+    (q(if($ENV{TRANSLATE_FEAR}){).
+     $translate.
+     q($self;})
+    )mego;
+  s(&__translate_and_return__)
+    (q(if($ENV{TRANSLATE_FEAR}){).
+     $translate.
+     q(})
+    )mego;
   
 
   # For debugging
   if($ENV{DUMP_FILTERED}){
+#if(1){
     my $c = 1;
     foreach my $line (split /\n/){
       printf "[%4d] %s\n", $c++, $line;

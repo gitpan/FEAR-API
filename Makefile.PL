@@ -24,16 +24,20 @@ requires  ('Inline::Files');
 requires  ('IO::All');
 requires  ('IO::String');
 requires  ('IPC::SysV');
+requires  ('Parallel::ForkManager');
 requires  ('Regexp::Bind');
 requires  ('Regexp::Common');
+requires  ('Sort::Versions');
 requires  ('Spiffy');
 requires  ('Template');
 requires  ('Template::Extract');
 requires  ('Text::CSV');
-requires  ('Tie::ShareLite');
+requires  ('Text::Iconv');
 requires  ('WWW::Mechanize');
 requires  ('XML::XPath');
 requires  ('YAML');
+
+recommends  ('Tie::ShareLite');
 
 build_requires  ('Test::More');
 install_script  ('bin/fearperl');

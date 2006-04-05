@@ -10,17 +10,18 @@ use Encode;
 use Text::Iconv;
 use MIME::Base64;
 use Digest::MD5 qw(md5);
+#use FEAR::API::Translate -base;
 
-chain 'document';
-alias content => 'document';
-field 'title';
-field 'type';
+_chain 'document';
+_alias content => 'document';
+_field 'title';
+#_field 'type';
 
 
 sub length {
   CORE::length($self->{document});
 }
-alias size => 'length';
+_alias size => 'length';
 
 sub as_string {
   $self->{document};
@@ -83,7 +84,7 @@ chain_sub try_compress {
   $self->{document} = $td if $td;
 }
 
-alias try_uncompress => 'try_decompress';
+_alias try_uncompress => 'try_decompress';
 chain_sub try_decompress {
   my $td = Compress::Zlib::memGunzip $self->{document};
   $self->{document} = $td if $td;
@@ -93,13 +94,13 @@ chain_sub try_decompress {
 # MIME methods
 ######################################################################
 
-alias mime_encode => 'MIME_encode';
+_alias mime_encode => 'MIME_encode';
 sub MIME_encode {
     $self->utf8_off;
     $self->{document} = encode_base64 $self->{document};
 }
 
-alias mime_decode => 'MIME_decode';
+_alias mime_decode => 'MIME_decode';
 sub MIME_decode {
   $self->{document} = decode_base64 $self->{document};
   $self->utf8_on;
@@ -194,7 +195,8 @@ sub uniq {
 
 ########################################
 # d is for destructive
-####################
+########################################
+
 chain_sub d_map {
   $self->{document} = $self->map(@_);
 }
@@ -213,7 +215,7 @@ chain_sub d_uniq {
 
 
 ######################################################################
-# Conversion methods
+# XML-related methods
 ######################################################################
 
 use File::Temp qw/ :POSIX /;
@@ -221,7 +223,7 @@ use XML::XPath;
 use XML::XPath::XMLParser;
 
 
-alias to_xhtml => 'html_to_xhtml';
+_alias to_xhtml => 'html_to_xhtml';
 chain_sub html_to_xhtml {
     local $/;
     open STDERR, ">/dev/null";
@@ -251,6 +253,62 @@ chain_sub xpath {
 	}
     }
     $self->{document} = $t;
+}
+
+
+######################################################################
+# Tokenization
+######################################################################
+
+
+our $InCJK
+   =
+    qr(
+    \p{InCJKUnifiedIdeographs} |
+    \p{InCJKUnifiedIdeographsExtensionA} |
+    \p{InCJKUnifiedIdeographsExtensionB} |
+
+    \p{InCJKCompatibilityForms} |
+    \p{InCJKCompatibilityIdeographs} |
+    \p{InCJKCompatibilityIdeographsSupplement} |
+
+    \p{InCJKRadicalsSupplement} |
+    \p{InCJKSymbolsAndPunctuation} |
+
+    \p{InHiragana} |
+    \p{InKatakana} |
+    \p{InKatakanaPhoneticExtensions} |
+
+    \p{InHangulCompatibilityJamo} |
+    \p{InHangulJamo} |
+    \p{InHangulSyllables}
+   )x;
+
+sub tokens {
+    my @tok;
+    if($self->{document} =~ /[aiueo0-9]/io){
+	while($self->{document} =~ /([\p{Latin}\p{Number}]+)/go){
+	    my $tok = lc $1;
+	    next unless $tok;
+	    push @tok, $tok;
+	}
+    }
+
+    if($self->{document} =~ /(?:$InCJK)/o){
+        # Extract unigrams
+	my @t;
+        while($self->{document} =~ /($InCJK)/go){
+	    my $t = $1;
+	    next unless length($t) == 1;
+	    push @t, $t;
+        }
+        for (my $i=0; $i<$#t; $i++){
+            my $t = $t[$i].$t[$i+1];
+            push @tok, $t;
+        }
+	@tok = (@t, @tok);
+    }
+    @tok;
 }
 
 

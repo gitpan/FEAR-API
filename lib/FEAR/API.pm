@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.480.1';
+our $VERSION = '0.480.2';
 
 use utf8;
 our @EXPORT
@@ -57,6 +57,7 @@ use FEAR::API::Filters;
 use FEAR::API::Link;
 use FEAR::API::Log;
 use FEAR::API::SourceFilter;
+use FEAR::API::Translate -base;
 use FEAR::API::URLPool;
 
 require URI::URL;
@@ -65,7 +66,6 @@ use Cwd;
 use Data::Dumper;
 use Encode;
 use File::Path;
-use File::Slurp;
 use File::Slurp;
 use File::Spec::Functions qw(catfile splitpath rel2abs);
 use Inline::Files::Virtual;
@@ -77,12 +77,14 @@ use Storable qw(dclone freeze thaw);
 use Switch;
 use Template;
 use Text::CSV;
-use Tie::ShareLite qw( :lock );
 use URI;
 use URI::Split;
 use URI::WithBase;
 use URI::Escape;
 use YAML;
+sub LOCK_EX() {};
+eval 'use Tie::ShareLite qw( :lock );';
+
 
 #================================================================================
 # Overloaded operators.
@@ -143,13 +145,13 @@ sub ol_dispatch_links {
 }
 
 sub _preproc($;$)     {  [ sub { shift->preproc(@{shift()}) } => \@_ ] }
-alias _doc_filter => '_preproc';
+_alias _doc_filter => '_preproc';
 
 sub _postproc($;$@)    {  [ sub { shift->postproc(@{shift()})} => \@_ ] }
-alias _result_filter => '_postproc';
+_alias _result_filter => '_postproc';
 
 sub _template($)      {  [ sub { shift->template(@{shift()})->extract } => \@_ ] }
-alias _extract => '_template';
+_alias _extract => '_template';
 
 sub _save_as($)       {  [ sub { shift->save_to_file(shift()) } => $_[0] ]      }
 sub _save_as_tree(;$) {  [ sub { shift->save_as_tree(shift()) }=> $_[0] ]      }
@@ -188,7 +190,7 @@ sub _compress()       {  [ sub { shift->document->try_compress() } ] }
 sub _uncompress()     {  [ sub { shift->document->try_uncompress() } ] }
 
 sub _html_to_xhtml()    {  [ sub { shift->document->html_to_xhtml() } ] }
-alias _to_xhtml => '_html_to_xhtml';
+_alias _to_xhtml => '_html_to_xhtml';
 sub _xpath()            {  [ sub { shift->document->xpath(@{$_[0]}) }, \@_ ] }
 
 sub _foreach_result(&)      {  [ sub {
@@ -204,7 +206,7 @@ sub _foreach_result(&)      {  [ sub {
 				 },
 				 [ shift() ] ]
 			     }
-alias foreach => '_foreach_result';
+_alias foreach => '_foreach_result';
 
 chain_sub ol_filter {
   local $_;
@@ -311,31 +313,30 @@ $Storable::Eval = 1;
 my $urlhistory = FEAR::API::URLPool->new;
 
 my $extor = +{FEAR::API::Extract->new_all};
-*field = \&FEAR::API::Closure::field;
-field 'extractor' => $extor;
-field 'extresult';
-field 'urlhistory';
-field 'dup';
-field 'inline_files';
-field fetching_count => 0;               # Count of fetchings
-field 'error';                           # Contains error information
-field document => FEAR::API::Document->new();
-alias doc => 'document';
+_field 'extractor' => $extor;
+_field 'extresult';
+_field 'urlhistory';
+_field 'dup';
+_field 'inline_files';
+_field fetching_count => 0;               # Count of fetchings
+_field 'error';                           # Contains error information
+_field document => FEAR::API::Document->new();
+_alias doc => 'document';
 
 my $wua = FEAR::API::Agent->new();
-field wua => $wua;                     # Web user agent
-alias ua => 'wua';
+_field wua => $wua;                     # Web user agent
+_alias ua => 'wua';
 
-field preproc_prefix => '
+_field preproc_prefix => '
 sub ($) {
   local $_ = shift;
 ';
 
-field preproc_postfix => '
+_field preproc_postfix => '
   return $_
 }
 ';
-field postproc_prefix => '
+_field postproc_prefix => '
 sub ($) {
   my $data = shift;
   foreach (@$data) {
@@ -345,89 +346,72 @@ sub ($) {
       }
 ';
 
-field postproc_postfix => '
+_field postproc_postfix => '
   }
   $data = [ grep {ref($_) eq q(HASH) ? %$_ : @$_} @$data ];
   return $data;
 }
 ';
 
-field logger => FEAR::API::Log->new;
-field initial_timestamp => undef;
-field max_exec_time => undef;            # Exceed this limit and program exits.
-field extmethod => 'Template::Extract';
-field document_stack => [];
-field referer => undef;
-field max_processes => 5;
+_field logger => FEAR::API::Log->new;
+_field initial_timestamp => undef;
+_field max_exec_time => undef;            # Exceed this limit and program exits.
+_field extmethod => 'Template::Extract';
+_field document_stack => [];
+_field referer => undef;
+_field max_processes => 5;
 
 
-chain allow_duplicate => 0;
-chain eval_proc => 1;                    # Evaluate pre|post procesing code
-chain use_proc_affix => 1;               # Use pre-|post-fix around eval code
-chain use_TT_in_url => 1;                # Enable Template code in URL
-chain use_inline => 1;                   # Enable Inline::Files support
-chain fallthrough_report => 0;           # Fall through report_links' options
-alias fallthrough => 'fallthrough_report';
-chain random_delay => 1;                 # Interval of random delays, in seconds
-chain fetch_delay => 1;                  # The mininum delay between fetchings, in seconds
-chain quiet => 0;                        # Turn on/off warnings
-chain max_fetching_count => 0;           # Maximum number of fetching
-chain parallel => 0;                     # Use/Don't use parallel fetching
-chain auto_append_url => 0;              # Auto-append url to results. Default is Off.
+_chain allow_duplicate => 0;
+_chain eval_proc => 1;                    # Evaluate pre|post procesing code
+_chain use_proc_affix => 1;               # Use pre-|post-fix around eval code
+_chain use_TT_in_url => 1;                # Enable Template code in URL
+_chain use_inline => 1;                   # Enable Inline::Files support
+_chain fallthrough_report => 0;           # Fall through report_links' options
+_alias fallthrough => 'fallthrough_report';
+_chain random_delay => 1;                 # Interval of random delays, in seconds
+_chain fetch_delay => 1;                  # The mininum delay between fetchings, in seconds
+_chain quiet => 0;                        # Turn on/off warnings
+_chain max_fetching_count => 0;           # Maximum number of fetching
+_chain parallel => 0;                     # Use/Don't use parallel fetching
+_chain auto_append_url => 0;              # Auto-append url to results. Default is Off.
                                          # Call append_url() to append manually.
 
-
-#======================================================================
-# Translation method
-#======================================================================
-sub __translate(@) {
-    my $self = shift;
-    my $subname = shift;
-    my @rest = @_;
-    switch($subname) {
-	case 'url' {
-	    if(@rest){
-		print 'push @url, '.(join q/, /, map{"'$_'"} @rest).';'.$/;
-	    }
-	}
-	case 'fetch' {
-	    if(@rest){
-		print 'fetch('."'$rest[0]'".');'.$/;
-	    }
-	    else {
-		print 'fetch(shift(@url));'.$/;
-	    }
-	}
-	else {
-	    print $subname,$/
-	}
-    }
-}
 
 #======================================================================
 # Shared memory
 #======================================================================
 
 my $shared_key = '6666';
-my $shared_handle = tie my %shared_var, 'Tie::ShareLite',
+my $shared_handle;
+my %shared_var;
+if($INC{'Tie/ShareLite.pm'}){
+    $shared_handle = tie %shared_var, 'Tie::ShareLite',
     -key     => $shared_key,
     -mode    => 0700,
     -create  => 'yes',
     -destroy => 'no'
 	or croak("Could not tie to shared memory: $!");
+}
 
-field shared_handle => $shared_handle;
-field shared_var => \%shared_var;
+_field shared_handle => $shared_handle;
+_field shared_var => \%shared_var;
 
-$shared_handle->lock(LOCK_EX);
-$shared_var{fetching_count} = 0;
-$shared_handle->unlock;
+if(ref $shared_handle){
+    $shared_handle->lock(LOCK_EX);
+    $shared_var{fetching_count} = 0;
+    $shared_handle->unlock;
+}
 
 use subs 'print';
 sub print {
-  $shared_handle->lock(LOCK_EX);
-  CORE::print(@_);
-  $shared_handle->unlock;
+    if(ref $shared_handle){
+	$shared_handle->lock(LOCK_EX);
+    }
+    CORE::print(@_);
+    if(ref $shared_handle){
+	$shared_handle->unlock;
+    }
 };
 
 
@@ -704,17 +688,21 @@ chain_sub try_compress_document {
 
 sub inc_fetching_count {
     if($self->{parallel}){
-	$self->shared_handle->lock(LOCK_EX);
-	if( exists $self->shared_var->{fetching_count} ){
-	    $self->{fetching_count} = $self->shared_var->{fetching_count};
+	if(ref $shared_handle){
+	    $self->shared_handle->lock(LOCK_EX);
+	    if( exists $self->shared_var->{fetching_count} ){
+		$self->{fetching_count} = $self->shared_var->{fetching_count};
+	    }
 	}
     }
 
     $self->{fetching_count}++;
     
     if($self->{parallel}){
-	$self->shared_var->{fetching_count} = $self->{fetching_count};
-	$self->shared_handle->unlock;
+	if(ref $shared_handle){
+	    $self->shared_var->{fetching_count} = $self->{fetching_count};
+	    $self->shared_handle->unlock;
+	}
     }
 }
 
@@ -800,7 +788,10 @@ chain_sub file {
 
 chain_sub pfetch {
     my $callback = shift;
-
+    if(not ref $shared_handle){
+	print("Cannot use Tie::ShareLite.\npfetch() is disabled.\nPlease install Tie::ShareLite to get this work.\n");
+	return;
+    }
     my $pm = new Parallel::ForkManager($self->max_processes);
     while (my $link = shift @{$self->{url}}){
 	my $pid = $pm->start and next;
@@ -997,7 +988,7 @@ sub uniq {
 	}++} @$aryref;
 }
 
-alias dispatch_links => 'report_links';
+_alias dispatch_links => 'report_links';
 chain_sub report_links {
     my @dispatch_table = @_ or return $self;
 
@@ -1117,7 +1108,7 @@ sub _create_proc_sub {
 }
 
 
-alias doc_filter => 'preproc';
+_alias doc_filter => 'preproc';
 chain_sub preproc {
     return $self if !$_[0];
     no strict 'refs';
@@ -1134,7 +1125,7 @@ chain_sub preproc {
     }
 }
 
-alias result_filter => 'postproc';
+_alias result_filter => 'postproc';
 chain_sub postproc {
     return $self if !$_[0];
     no strict 'refs';
@@ -1176,8 +1167,8 @@ chain_sub clear_urlhistory {
 #================================================================================
 # Delegates for LWP::UserAgent object ($self->wua)
 #================================================================================
-alias res => 'response';
-alias resp => 'response';
+_alias res => 'response';
+_alias resp => 'response';
 sub response {
   $self->wua->response;
 }
@@ -1292,15 +1283,15 @@ chain_sub output_template {
 
 
 
-alias ___ => 'has_more_urls';
-alias has_more_links => 'has_more_urls';
+_alias ___ => 'has_more_urls';
+_alias has_more_links => 'has_more_urls';
 
 sub has_more_urls { 
     ref($self->{url}) && @{$self->{url}} ?
 	($self->reach_max_fetching_count ? 0 : 1 ) : 0;
 }
 
-alias has_more_links_like => 'has_more_urls_like';
+_alias has_more_links_like => 'has_more_urls_like';
 sub has_more_urls_like {
     my $pattern = shift;
     (ref($_) ? $_->[0] : $_) =~ m($pattern) and return 1 foreach @{$self->{url}};
