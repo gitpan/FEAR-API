@@ -152,3 +152,8 @@
 	- add some docs in FEAR::API::Filters
 	- add naive tokenizer in FEAR::API::Document
 	- working on translate() [ Hard ]
+
+0.481  Fri, 14 Apr 2006 17:18:10 +0800
+
+	- Add load_sst() and run_sst()
+

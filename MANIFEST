@@ -192,6 +192,7 @@ t/shell_like.t
 t/shuffle_urlqueue.t
 t/skip_document_with_without.t
 t/sort_links.t
+t/sst.t
 t/submit_form.t
 t/title.t
 t/translate.t

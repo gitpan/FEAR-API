@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.480.2';
+our $VERSION = '0.481';
 
 use utf8;
 our @EXPORT
@@ -64,6 +64,7 @@ require URI::URL;
 use Carp;
 use Cwd;
 use Data::Dumper;
+use Digest::MD5 qw(md5_hex);
 use Encode;
 use File::Path;
 use File::Slurp;
@@ -1281,7 +1282,32 @@ chain_sub generate_template {
 chain_sub output_template {
 }
 
+# ======================================================================
+# Code generation
+# ======================================================================
 
+# SST is for 'site scraping template'
+_field 'sst';
+_field 'sst_source';
+_field 'sst_compiled';
+
+chain_sub load_sst {
+    $self->sst(shift);
+}
+
+chain_sub load_sst_file {
+    $self->sst(io(shift)->all);
+}
+
+chain_sub run_sst {
+    my $output;
+    $tt->process(\$self->sst, shift, \$output);
+    if(md5_hex $self->sst_source ne md5_hex $output){
+	$self->sst_source($output);
+	$self->{sst_compiled} = eval 'sub {' . $output . '}';
+    }
+    $self->sst_compiled->();
+}
 
 _alias ___ => 'has_more_urls';
 _alias has_more_links => 'has_more_urls';
@@ -1569,6 +1595,15 @@ More documentation will come sooooooner or later.
 
     fetch("google.com") | _to_xhtml | _xpath('/html/body/*/form');
     print $$_;
+
+=head2 Make your site scraping script a subroutine
+
+    # sst is for site scraping template;
+    load_sst('fetch("google.com") >> _self; $_->() while $_');
+    run_sst;
+
+    load_sst('fetch("[% initial_link %]") >> _self; $_->() while $_');
+    run_sst({ initial_link => 'google.com'});
 
 =head1 Use FEAR::API in one-liners
 
