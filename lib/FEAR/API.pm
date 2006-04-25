@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.481';
+our $VERSION = '0.482';
 
 use utf8;
 our @EXPORT
@@ -96,7 +96,7 @@ use overload
   q/&{}/ => 'ol_subref',
   q/@{}/ => 'ol_aryref',
   q/${}/ => 'ol_scalarref',
-#  q/""/  => 'ol_quote',
+  q/""/  => 'ol_quote',
   q/>/   => 'ol_redirect_to',
   q/</   => 'ol_redirect_from',
   q/+=/  => 'ol_push_url',
@@ -238,8 +238,9 @@ sub ol_scalarref {
 }
 
 sub ol_quote {
-  $self->document->as_string;
+  $self;
 }
+
 
 chain_sub ol_redirect_to {
   my $ref = ref $_[0];
@@ -300,7 +301,6 @@ sub import() {
 	$_ = fear();
         $_->url($arg->{-url}) if $arg->{-url};
     }
-
 }
 
 
@@ -320,9 +320,12 @@ _field 'urlhistory';
 _field 'dup';
 _field 'inline_files';
 _field fetching_count => 0;               # Count of fetchings
-_field 'error';                           # Contains error information
+_field 'error';                                     # Contains error information
 _field document => FEAR::API::Document->new();
 _alias doc => 'document';
+
+our @tabs;
+_field current_tab => 0;
 
 my $wua = FEAR::API::Agent->new();
 _field wua => $wua;                     # Web user agent
@@ -1283,6 +1286,62 @@ chain_sub output_template {
 }
 
 # ======================================================================
+# Tab scraping
+# ======================================================================
+
+sub tab {
+    my $tab_number = shift;
+    my $fear_object;
+    if(defined $tab_number){
+#  	print "$self->{current_tab} => $tab_number\n";
+# 	print "@tabs\n";
+	$tabs[$self->{current_tab}] = $self;
+	undef $self;
+	$fear_object = defined $tabs[$tab_number] ?
+	    $tabs[$tab_number] : do {
+# 		print "Creating new\n";
+		my $f = __PACKAGE__->new();
+ 		$f->document(FEAR::API::Document->new);
+  		$f->wua(FEAR::API::Agent->new);
+  		$f->urlhistory(FEAR::API::URLPool->new);
+  		$f->extractor(+{FEAR::API::Extract->new_all});
+		$f->logger(FEAR::API::Log->new);
+		$f;
+	    };
+	$fear_object->current_tab($tab_number);
+	$tabs[$tab_number] = $fear_object;
+
+	if(caller(0)->isa('FEAR::API')){
+	    $_ =  $fear_object;
+	}
+	else {
+	    $self = $fear_object;
+	}
+    }
+    return $fear_object;
+}
+
+sub keep_tab {
+    if(my $tab_number = shift){
+	@tabs = ($tabs[$tab_number]);
+	$tabs[0]->{current_tab} = 0;
+    }
+}
+
+sub close_tab {
+    my $tab_number = shift;
+    if( defined $tab_number ){
+# 	print "Closing $tab_number\n";
+	undef $tabs[$tab_number];
+	@tabs = grep{defined $_} @tabs;
+	my $count = 0;
+	for my $t (@tabs){
+	    $t->{current_tab} = $count++;
+	}
+    }
+}
+
+# ======================================================================
 # Code generation
 # ======================================================================
 
@@ -1604,6 +1663,18 @@ More documentation will come sooooooner or later.
 
     load_sst('fetch("[% initial_link %]") >> _self; $_->() while $_');
     run_sst({ initial_link => 'google.com'});
+
+=head2 Tabbed scraping
+
+    fetch("google.com");        # Default tab is 0
+    tab 1;                             # Create a new tab, and switch to it.
+    fetch("search.cpan.org");  # Fetch page in tab 1
+    tab 0;                             # Switch back to tab 0
+    template($template);       # Continue processing in tab 0
+    extract();
+
+    keep_tab 1;                    # Keep tab 1 only and close others
+    close_tab 1;                    # Close tab 1
 
 =head1 Use FEAR::API in one-liners
 

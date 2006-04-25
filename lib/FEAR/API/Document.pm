@@ -255,6 +255,9 @@ chain_sub xpath {
     $self->{document} = $t;
 }
 
+chain_sub hpath {
+    $self->html_to_xhtml->xpath(@_);
+}
 
 ######################################################################
 # Tokenization
