@@ -1,3 +1,4 @@
+bin/fear
 bin/fear-recorder
 bin/fearperl
 Changes
@@ -15,6 +16,7 @@ inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
 lib/FEAR/API.pm
 lib/FEAR/API/Agent.pm
+lib/FEAR/API/ChksumRepos.pm
 lib/FEAR/API/Closure.pm
 lib/FEAR/API/Document.pm
 lib/FEAR/API/Extract.pm
@@ -28,7 +30,6 @@ lib/FEAR/API/Recorder/LWP_UserAgent.pm
 lib/FEAR/API/SourceFilter.pm
 lib/FEAR/API/Translate.pm
 lib/FEAR/API/Translate/Backend.pm
-lib/FEAR/API/URLPool.pm
 LICENSE
 Makefile.PL
 MANIFEST			This list of files
@@ -160,6 +161,7 @@ t/data/cpan.db
 t/data/CPAN/DBI.pm
 t/data/schema.sql
 t/data/url_list
+t/docsum.t
 t/document_mime.t
 t/document_type.t
 t/extract_links.t
@@ -194,6 +196,7 @@ t/skip_document_with_without.t
 t/sort_links.t
 t/sst.t
 t/submit_form.t
+t/tabbed.t
 t/title.t
 t/translate.t
 t/urlhistory.t

@@ -24,8 +24,22 @@ sub length {
 _alias size => 'length';
 
 sub as_string {
-  $self->{document};
+    $self->{document};
 }
+
+sub digest {
+    my $digest;
+    if( Encode::is_utf8 $self->{document} ){
+	Encode::_utf8_off $self->{document};
+	$digest = md5 $self->{document};
+	Encode::_utf8_on $self->{document};
+    }
+    else {
+	$digest = md5 $self->{document};
+    }
+    return $digest;
+}
+
 
 sub is_utf8 {
   Encode::is_utf8($self->{document});

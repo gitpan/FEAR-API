@@ -1,0 +1,250 @@
+#!/usr/bin/perl
+
+use strict;
+use Getopt::Long;
+use FEAR::API -base;
+use YAML;
+use Data::Dumper;
+use Carp;
+
+my %opt;
+my @init_links;
+GetOptions(
+	   \%opt,
+	   'dump|d=s',
+	   'dump-all|a',
+	   'download|o',
+	   'source|s',
+	   'file|f',
+	   'content-type|y=s',
+	   'xpath|p=s',
+	   'verbose|v',
+	   'method|m=s',
+	   'template|t=s',
+	   'eval|e=s',
+	   'pre=s@',
+	   'post=s@',
+	   'dumper|r=s',
+	   'debug|D',
+	  );
+
+if( $opt{debug} ){
+    local $Data::Dumper::Terse = 1;
+    local $Data::Dumper::Indent = 1;
+    print $/,
+	"Option(s):\n", Dumper(\%opt), $/,
+	    "URL(s):\n", join( q/ /, @ARGV), $/x2;
+}
+
+_alias dumper => 'Dumper';
+sub Dumper {
+    if( $opt{dumper} eq 'YAML' ){
+	YAML::Dump(@_);
+    }
+    else {
+	Data::Dumper::Dumper(@_);
+    }
+}
+
+sub dump_info {
+    my $action = shift;
+    my $all = $action eq 'all';
+
+    print "\n[ Links ]\n";
+    if( $all or $action eq 'links' ){
+	if($opt{verbose}){
+ 	    print dumper( wua->links);
+	}
+	else {
+ 	    print map{$_->[0],$/} wua->links;
+	}
+    }
+
+    print "\n[ Images ]\n";
+    if( $all or $action eq 'images' ){
+	if($opt{verbose}){
+	    print dumper( wua->images);
+	}
+	else {
+	    print map{$_->url,$/} wua->links;
+	}
+    }
+
+    print "\n[ Forms ]\n";
+    if( $all or $action eq 'forms' ){
+	if( $opt{verbose} ){
+	    print dumper( wua->forms);
+	}
+	else {
+	    foreach my $f (wua->forms){
+		print $f->dump;
+	    }
+	}
+    }
+}
+
+# Main control
+foreach my $source (@ARGV[0]){
+    if( $opt{file} ){
+	file($source);
+	force_content_type($opt{'content-type'} || 'text/html');
+    }
+    else {
+	fetch($source);
+    }
+
+    if( $opt{method} ){
+	extmethod($opt{method});
+    }
+
+    if( $opt{'dump-all'} ){
+	dump_info('all');
+    }
+    elsif ( $opt{dump} ){
+	dump_info($opt{dump});
+    }
+
+    if( $opt{xpath} ){
+	my $content_type = wua->ct;
+	if($content_type =~ /html/){
+	    doc->html_to_xhtml;
+	}
+	doc->xpath($opt{xpath});
+    }
+
+    if( $opt{source} ){
+	print doc->as_string;
+    }
+
+    if( $opt{download} ){
+	my $outputfile = 'fear.output';
+	if(-e 'fear.output'){
+	    my $count = 1;
+	    while( 1 ){
+		if(not -e "fear.output.$count"){
+		    $outputfile = "fear.output.$count";
+		    last;
+		}
+		$count++;
+	    }
+	}
+	print "Saving content as  [ $outputfile ] ... \n";
+	save_as($outputfile);
+    }
+
+    if( exists $opt{pre} and ref $opt{pre} ){
+	foreach my $p (@{$opt{pre}}){
+	    preproc($opt{pre});
+	}
+    }
+
+    if( $opt{template} ){
+	template(eval $opt{template});
+	extract;
+	print dumper extresult;
+    }
+
+    if( exists $opt{post} and ref $opt{post} ){
+	foreach my $p (@{$opt{post}}){
+	    postproc($opt{post});
+	}
+    }
+
+    if( $opt{eval} ){
+	eval $opt{eval};
+	croak $@ if $@;
+    }
+}
+
+
+__END__
+
+=pod
+
+=head1 CLI access to FEAR::API
+
+
+=head2 Dumper information from content
+
+  fear -d 'image' google.com  # images, links, forms
+
+       --dump 'image'
+
+=head2 Dumper ALL information from content
+  fear -a google.com
+
+       -d 'all'
+
+       --dump-all
+
+=head2 Save content to fear.output
+
+  fear -o google.com
+
+       --download
+
+=head2 Load content from filesystem
+
+  fear -f 'some.html.file'
+
+=head2 Xpath content
+
+  fear -p '/html/body/*' google.com
+
+       --xpath
+
+=head2 Print out content
+
+  fear -s google.com
+
+       --source
+
+=head2 Specify extraction method
+
+  fear -m Regexp::GlobalBind
+
+=head2 Specify template
+
+  fear -t '<a href="[% link %]">[% text %]</a>'
+
+=head2 Choose dumping module (YAML and Data::Dumper)
+
+  fear -r YAML
+
+=head2 Verbose output
+
+  fear -v
+
+=head2 Input perl code
+
+  fear -e "fetch('google.com')"
+
+       --execute
+
+=head2 Force content type
+
+  fear -y 'text/html'
+
+       --content-type
+
+=head1 MIX TOGETHER
+
+  fear google.com -m Regexp::GlobalBind -p '/html/head' -t 'qr"<meta (?#<fields>.+?) />"' -r YAML
+
+Fetch google's homepage
+
+Set extraction method to Regexp::GlobalBind
+
+Use XPATH to select /html/head subtree
+
+Apply template
+
+Dump results using YAML
+
+=head1 COPYRIGHT
+
+Copyright (C) 2006 by Yung-chung Lin (a.k.a. xern) <xern@cpan.org>
+
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself
+
+=cut

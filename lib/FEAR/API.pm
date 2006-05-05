@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.482';
+our $VERSION = '0.483';
 
 use utf8;
 our @EXPORT
@@ -17,6 +17,7 @@ our @EXPORT
       io
       @default_query_terms
       Dumper
+      Dump
      ),
      qw(
 	_template
@@ -58,13 +59,13 @@ use FEAR::API::Link;
 use FEAR::API::Log;
 use FEAR::API::SourceFilter;
 use FEAR::API::Translate -base;
-use FEAR::API::URLPool;
+use FEAR::API::ChksumRepos;
 
 require URI::URL;
 use Carp;
 use Cwd;
 use Data::Dumper;
-use Digest::MD5 qw(md5_hex);
+use Digest::MD5 qw(md5 md5_hex);
 use Encode;
 use File::Path;
 use File::Slurp;
@@ -311,7 +312,7 @@ sub import() {
 $Storable::Deparse = 1;
 $Storable::Eval = 1;
 
-my $urlhistory = FEAR::API::URLPool->new;
+my $urlhistory = FEAR::API::ChksumRepos->new(remove_on_destroy => 1);
 
 my $extor = +{FEAR::API::Extract->new_all};
 _field 'extractor' => $extor;
@@ -364,7 +365,7 @@ _field extmethod => 'Template::Extract';
 _field document_stack => [];
 _field referer => undef;
 _field max_processes => 5;
-
+_field docsum_repos => undef;
 
 _chain allow_duplicate => 0;
 _chain eval_proc => 1;                    # Evaluate pre|post procesing code
@@ -759,6 +760,9 @@ chain_sub fetch {
     }
 
     $self->urlhistory->add($url) unless $self->{allow_duplicate};
+    if( $self->{docsum_repos} and ref $self->{docsum_repos} ){
+	$self->{docsum_repos}->add( $url, $self->{document}->digest );
+    }
     $self->{fetch_delay} && sleep ($self->{fetch_delay});
 
 
@@ -1235,6 +1239,7 @@ sub forms {
 #================================================================================
 # Additional utilities
 #================================================================================
+_alias save_as =>'save_to_file';
 chain_sub save_to_file {
     my $filename = shift || croak 'Please input file name';
     open my $f, '>', $filename or croak "Cannot open $filename for writing";
@@ -1303,7 +1308,10 @@ sub tab {
 		my $f = __PACKAGE__->new();
  		$f->document(FEAR::API::Document->new);
   		$f->wua(FEAR::API::Agent->new);
-  		$f->urlhistory(FEAR::API::URLPool->new);
+  		$f->urlhistory(FEAR::API::ChksumRepos->new(
+							  remove_on_destroy => 1
+							  )
+			      );
   		$f->extractor(+{FEAR::API::Extract->new_all});
 		$f->logger(FEAR::API::Log->new);
 		$f;
@@ -1340,6 +1348,43 @@ sub close_tab {
 	}
     }
 }
+
+######################################################################
+# Document checksum
+######################################################################
+
+sub use_docsum {
+    my $file = shift || croak "Please specify document checksum file";
+    my %opt = @_;
+    $self->{docsum_repos} = FEAR::API::ChksumRepos->new(
+							file => $file,
+							remove_on_destroy => 0
+						       );
+    if($opt{cleanup}){
+	$self->{docsum_repos}->empty;
+    }
+}
+
+sub no_docsum {
+    undef $self->{docsum_repos};
+}
+
+sub doc_changed {
+    return 1
+	if
+	    ref $self->{docsum_repos} and
+	    $self->{docsum_repos}->has($self->current_url) and
+		(
+		 $self->{docsum_repos}->value($self->current_url)
+		 ne
+		 $self->{document}->digest
+		 );
+}
+
+sub remove_docsum {
+    $self->{docsum_repos}->remove;
+}
+
 
 # ======================================================================
 # Code generation
@@ -1400,8 +1445,9 @@ combines many strong and powerful features from various CPAN modules,
 such as LWP::UserAgent, WWW::Mechanize, Template::Extract, Encode,
 HTML::Parser, etc. and digests them into a deeper Zen.
 
-More documentation will come sooooooner or later.
-
+However, this module violates probably every single rule of any Perl
+coding standards. Please stop here if you don't want to the yucky
+code.
 
 =head1 EXAMPLES
 
@@ -1682,6 +1728,11 @@ More documentation will come sooooooner or later.
     fearperl -e 'fetch("google.com")'
 
     perl -M'FEAR::API -base' -e 'fetch("google.com")'
+
+=head1 DEBATE
+
+This module has been heavily criticized on Perlmonks.
+Please go to L<http://perlmonks.org/?node_id=537504> for details.
 
 
 =head1 AUTHOR & COPYRIGHT

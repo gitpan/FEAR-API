@@ -160,3 +160,10 @@
 0.482  Tue, 25 Apr 2006 15:13:27 +0800
 
 	- Add tabbed scraping
+
+0.483  Fri, 05 May 2006 14:45:19 +0800
+
+	- Add document checksum in API.pm
+	- Rename URLPool.pm to ChksumRepos.pm, and add some extension methods
+	- Add bin/fear
+	- Add digest() in FEAR/Document.pm
