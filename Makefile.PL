@@ -34,12 +34,14 @@ requires  ('Template::Extract');
 requires  ('Text::CSV');
 requires  ('Text::Iconv');
 requires  ('WWW::Mechanize');
+requires  ('XML::RSS::SimpleGen'); 
 requires  ('XML::XPath');
 requires  ('YAML');
 
 recommends  ('Tie::ShareLite');
 
 build_requires  ('Test::More');
+install_script  ('bin/fear');
 install_script  ('bin/fearperl');
 install_script  ('bin/fear-recorder');
 auto_install();

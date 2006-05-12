@@ -1,11 +1,16 @@
 #!/usr/bin/perl
 
+BEGIN {
+    exec('perldoc', $0) if not @ARGV;
+}
+
 use strict;
 use Getopt::Long;
 use FEAR::API -base;
 use YAML;
 use Data::Dumper;
 use Carp;
+
 
 my %opt;
 my @init_links;
@@ -162,7 +167,6 @@ __END__
 =pod
 
 =head1 CLI access to FEAR::API
-
 
 =head2 Dumper information from content
 

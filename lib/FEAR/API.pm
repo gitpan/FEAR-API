@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.483';
+our $VERSION = '0.484';
 
 use utf8;
 our @EXPORT
@@ -289,15 +289,24 @@ our @default_query_terms =
     List::Util::shuffle('a'..'z', 0..9, split(//, '(<$_-/>)'));
 
 sub import() {
-    __PACKAGE__->SUPER::import(@_, -package => caller(0));
+    my $caller = caller(0);
+    __PACKAGE__->SUPER::import(@_, -package => $caller);
 
-    local *boolean_arguments = sub { qw(-blessed) };
+    local *boolean_arguments = sub { qw(-rss) };
     local *paired_arguments = sub {
 	qw(
 	   -url
 	  ) };
     my ($arg, undef) = __PACKAGE__->parse_arguments(@_);
 
+    if($arg->{-rss}) {
+	eval 'use XML::RSS::SimpleGen;';
+	die $@ if $@;
+	no strict 'refs';
+	foreach my $method (@XML::RSS::SimpleGen::EXPORT){
+	    *{$caller.'::'.$method} = \*{$method};
+	}
+    }
     if(caller(0)->isa('FEAR::API') and ref $_ ne 'FEAR::API'){
 	$_ = fear();
         $_->url($arg->{-url}) if $arg->{-url};
@@ -1710,6 +1719,7 @@ code.
     load_sst('fetch("[% initial_link %]") >> _self; $_->() while $_');
     run_sst({ initial_link => 'google.com'});
 
+
 =head2 Tabbed scraping
 
     fetch("google.com");        # Default tab is 0
@@ -1721,6 +1731,22 @@ code.
 
     keep_tab 1;                    # Keep tab 1 only and close others
     close_tab 1;                    # Close tab 1
+
+=head2 Create RSS file
+
+    use FEAR::API -base, -rss;
+    my $url = "http://google.com";
+    url($url)->();
+    rss_new( $url, "Google", "Google Search Engine" );
+    rss_language( 'en' );
+    rss_webmaster( 'xxxxx@yourdomain.com' );
+    rss_twice_daily();
+    rss_item(@$_) for map{ [ $_->url(), $_->text() ] } links;
+    die "No items have been added." unless rss_item_count;
+    rss_save('google.rss');
+
+See also L<XML::RSS::SimpleGen>
+
 
 =head1 Use FEAR::API in one-liners
 

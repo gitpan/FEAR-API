@@ -167,3 +167,7 @@
 	- Rename URLPool.pm to ChksumRepos.pm, and add some extension methods
 	- Add bin/fear
 	- Add digest() in FEAR/Document.pm
+
+0.484  Sat, 13 May 2006 01:12:09 +0800
+
+	- Add RSS generation support

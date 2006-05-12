@@ -41,6 +41,7 @@ requires:
   Text::CSV: 0
   Text::Iconv: 0
   WWW::Mechanize: 0
+  XML::RSS::SimpleGen: 0
   XML::XPath: 0
   YAML: 0
-version: 0.483
+version: 0.484
