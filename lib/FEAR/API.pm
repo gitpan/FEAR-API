@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.484';
+our $VERSION = '0.485';
 
 use utf8;
 our @EXPORT
@@ -417,13 +417,22 @@ if(ref $shared_handle){
     $shared_handle->unlock;
 }
 
+sub output_filehandle {
+    $self->{output_filehandle} = shift if $_[0];
+    select($self->{output_filehandle});
+    $self->{output_filehandle};
+}
+
 use subs 'print';
 sub print {
-    if(ref $shared_handle){
+    if(defined $shared_handle and ref $shared_handle){
 	$shared_handle->lock(LOCK_EX);
     }
+
+    select($self->{output_filehandle}) if $self->{output_filehandle};
     CORE::print(@_);
-    if(ref $shared_handle){
+
+    if( defined $shared_handle and ref $shared_handle ){
 	$shared_handle->unlock;
     }
 };

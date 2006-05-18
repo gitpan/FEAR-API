@@ -171,3 +171,7 @@
 0.484  Sat, 13 May 2006 01:12:09 +0800
 
 	- Add RSS generation support
+
+0.485  Thu, 18 May 2006 10:22:15 +0800
+
+	- Add output_filehandle()
