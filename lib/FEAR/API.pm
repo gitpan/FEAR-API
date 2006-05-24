@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.485';
+our $VERSION = '0.486';
 
 use utf8;
 our @EXPORT
@@ -60,6 +60,8 @@ use FEAR::API::Log;
 use FEAR::API::SourceFilter;
 use FEAR::API::Translate -base;
 use FEAR::API::ChksumRepos;
+use FEAR::API::Prefetching::Server;
+use FEAR::API::Prefetching;
 
 require URI::URL;
 use Carp;
@@ -288,11 +290,13 @@ sub ol_bool {
 our @default_query_terms =
     List::Util::shuffle('a'..'z', 0..9, split(//, '(<$_-/>)'));
 
+our $USE_PREFETCHING;
+
 sub import() {
     my $caller = caller(0);
     __PACKAGE__->SUPER::import(@_, -package => $caller);
 
-    local *boolean_arguments = sub { qw(-rss) };
+    local *boolean_arguments = sub { qw(-rss -prefetching) };
     local *paired_arguments = sub {
 	qw(
 	   -url
@@ -307,6 +311,18 @@ sub import() {
 	    *{$caller.'::'.$method} = \*{$method};
 	}
     }
+    if( $arg->{-prefetching} ){
+	$USE_PREFETCHING = 1;
+	# Start prefetching server here.
+	my $prefetching_server_pid = fork();
+	if( ! $prefetching_server_pid ) {
+	    open STDOUT, '>', '/dev/null';
+	    open STDERR, '>', '/dev/null';
+	    FEAR::API::Prefetching::Server::start_server();
+	    exit;
+	}
+    }
+
     if(caller(0)->isa('FEAR::API') and ref $_ ne 'FEAR::API'){
 	$_ = fear();
         $_->url($arg->{-url}) if $arg->{-url};
@@ -418,8 +434,7 @@ if(ref $shared_handle){
 }
 
 sub output_filehandle {
-    $self->{output_filehandle} = shift if $_[0];
-    select($self->{output_filehandle});
+    $self->{output_filehandle} = $_[0] if $_[0];
     $self->{output_filehandle};
 }
 
@@ -431,6 +446,7 @@ sub print {
 
     select($self->{output_filehandle}) if $self->{output_filehandle};
     CORE::print(@_);
+
 
     if( defined $shared_handle and ref $shared_handle ){
 	$shared_handle->unlock;
@@ -680,6 +696,11 @@ sub new()  {
 
 sub fear() {
     my $f = __PACKAGE__->new(@_);
+
+    if($USE_PREFETCHING){
+	$f->{prefetcher} = FEAR::API::Prefetching->new();
+    }
+
     if(defined wantarray){
 	$f;
     }
@@ -698,7 +719,7 @@ sub OK {
 }
 
 sub NOT_OK {
-  $! || $@ || $? || $^E || $self->error
+  $! || $@ || $? || $^E || $self->error;
 }
 
 chain_sub try_decompress_document {
@@ -720,7 +741,7 @@ sub inc_fetching_count {
     }
 
     $self->{fetching_count}++;
-    
+
     if($self->{parallel}){
 	if(ref $shared_handle){
 	    $self->shared_var->{fetching_count} = $self->{fetching_count};
@@ -763,6 +784,7 @@ chain_sub fetch {
 				     ) unless ref $link;
 #    print Dumper $link;
     my $url = $link->url;
+    my $baseurl = $link->base;
     my $referer = $link->referer || $self->value('referer');
 
 
@@ -788,19 +810,51 @@ chain_sub fetch {
     &print( "\n> [".$self->fetching_count."] Fetching $url ...\n");
 
     my $wua = $self->wua;
-    my $d =
-	  do {
+    my $document_content;
+    if(defined $self->{prefetcher} and $self->{prefetcher}->has($url)){
+	$document_content = $self->{prefetcher}->load_document($url);
+	my $path =  FEAR::API::Prefetching::document_path($url);
+	$document_content = $wua->get_content('file://'.$path);
+	$wua->{base} = URI::URL->new($url);
+	$wua->{uri} = URI::URL->new($url, $baseurl);
+	$wua->_extract_links();
+    }
+    else {
+	$document_content = do {
 	    $wua->add_header(Referer => $referer) if $referer;
 	    $wua->get_content($url);
 	    $wua->delete_header('Referer') if $referer;
 	    $wua->content;
-	  };
-    &print( "      [",$wua->title,"]",$/) if $wua->title;
-    $append_to_document ?
-      $self->document->append($d) : $self->document->content($d);
-    $self
-	->try_decompress_document()
-	;
+	};
+	if(defined $self->{prefetcher}){
+	    $self->{prefetcher}->save_document($url, \$document_content);
+	}
+	&print( "      [",$wua->title,"]",$/) if $wua->title;
+    }
+
+    if( $USE_PREFETCHING ){
+	if( $wua->links() ){
+	    my @links = @{dclone $wua->links()};
+	    @links = map{
+		$_->text(
+			 URI::URL->new(
+				       $_->url,
+				       $_->base
+				      )->abs);
+		$_;
+	    } @links;
+ 	    $self->remove_fetched_links(\@links);
+	    foreach my $link (@links){
+		$self->urlhistory->add($link->url);
+	    }
+	    $self->{prefetcher}->fetch(@links);
+	}
+    }
+
+    $append_to_document ?  $self->document->append($document_content) :
+	                                  $self->document->content($document_content);
+
+#     $self->try_decompress_document();
 }
 
 chain_sub fetch_and_append {
@@ -920,7 +974,7 @@ chain_sub append_url {
 
 chain_sub remove_fetched_links {
   if(ref($_[0]) eq 'ARRAY'){
-    @{$_[0]} = grep{!$self->urlhistory->has($_)}  @{$_[0]};
+    @{$_[0]} = grep{!$self->urlhistory->has(ref($_) ? $_->url : $_)}  @{$_[0]};
   }
   else {
     @{$self->{url}} = grep{!$self->urlhistory->has($_)} @{$self->{url}};
@@ -1455,7 +1509,20 @@ __END__
 
 FEAR::API - There's no fear with this elegant site scraper
 
+=head1 SYNOPSIS
+
+ FEAR 
+
+ = ∑( WWW Agent, Data Extractor, Data Munger, (X|HT)ML Parser, ...... , Yucky Overloading )
+
+ = ∞
+
+ = ☯
+
+
+
 =head1 DESCRIPTION
+
 
 FEAR::API is a tool that helps reduce your time creating site scraping
 scripts and help you do it in a much more elegant way. FEAR::API
@@ -1470,7 +1537,8 @@ code.
 =head1 EXAMPLES
 
     use FEAR::API -base;
-    
+
+
 =head2 Fetch a page and store it in a scalar
 
     fetch("google.com") > my $content;
@@ -1540,7 +1608,7 @@ code.
          http://some.site/[% i %]
          [% END %]");
     &$_ while $_;
-    
+
 =head2 Get pages in parallel
 
     url("google.com")->() >> _self;
@@ -1756,6 +1824,12 @@ code.
 
 See also L<XML::RSS::SimpleGen>
 
+=head2 Prefetching and document caching
+
+    use FEAR::API -base, -prefetching;
+
+The default document repository is at /tmp/fear-api/pf. (Non-changeable for now).
+FEAR::API currently uses fork() to do parallel prefetching, which is definitely NOT good for performance. This is expected to change in the future.
 
 =head1 Use FEAR::API in one-liners
 
@@ -1779,3 +1853,4 @@ it under the same terms as Perl itself
 
 
 =cut
+

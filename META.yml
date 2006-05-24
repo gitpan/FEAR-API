@@ -31,6 +31,7 @@ requires:
   IPC::SysV: 0
   Inline: 0
   Inline::Files: 0
+  Net::Server: 0
   Parallel::ForkManager: 0
   Regexp::Bind: 0
   Regexp::Common: 0
@@ -44,4 +45,4 @@ requires:
   XML::RSS::SimpleGen: 0
   XML::XPath: 0
   YAML: 0
-version: 0.485
+version: 0.486

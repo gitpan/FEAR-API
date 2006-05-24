@@ -94,14 +94,18 @@ sub guess_encoding {
 
 use Compress::Zlib;
 chain_sub try_compress {
-  my $td = Compress::Zlib::memGzip $self->{document};
-  $self->{document} = $td if $td;
+    if($self->{document}){
+	my $td = Compress::Zlib::memGzip $self->{document};
+	$self->{document} = $td if $td;
+    }
 }
 
 _alias try_uncompress => 'try_decompress';
 chain_sub try_decompress {
-  my $td = Compress::Zlib::memGunzip $self->{document};
-  $self->{document} = $td if $td;
+    if($self->{document}){
+	my $td = Compress::Zlib::memGunzip $self->{document};
+	$self->{document} = $td if $td;
+    }
 }
 
 ######################################################################

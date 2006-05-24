@@ -24,6 +24,7 @@ requires  ('Inline::Files');
 requires  ('IO::All');
 requires  ('IO::String');
 requires  ('IPC::SysV');
+requires  ('Net::Server');
 requires  ('Parallel::ForkManager');
 requires  ('Regexp::Bind');
 requires  ('Regexp::Common');
