@@ -36,5 +36,20 @@ sub has {
 }
 
 
+############################################
+# Initiate document repository
+############################################
+use File::Spec::Functions;
+use File::Path;
+
+mkpath([ repos_path() ], 0, 0777);
+foreach my $a (0..9, 'a'..'f'){
+    mkdir catfile(repos_path(), $a);
+    foreach my $b (0..9, 'a'..'f'){
+	mkdir catfile(repos_path(), $a, $b);
+    }
+}
+
+
 
 1;

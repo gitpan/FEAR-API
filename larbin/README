@@ -1,0 +1,8 @@
+This directory contains necessary configuration for adapting Larbin with
+FEAR::API for prefetching purposes.
+
+Please /bin/cp -rf this directory tree to the path to Larbin, recompile it,
+and run it.
+
+Thank you,
+Yung-chung Lin

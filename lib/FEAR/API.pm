@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.486';
+our $VERSION = '0.487';
 
 use utf8;
 our @EXPORT
@@ -296,7 +296,7 @@ sub import() {
     my $caller = caller(0);
     __PACKAGE__->SUPER::import(@_, -package => $caller);
 
-    local *boolean_arguments = sub { qw(-rss -prefetching) };
+    local *boolean_arguments = sub { qw(-rss -prefetching -larbin) };
     local *paired_arguments = sub {
 	qw(
 	   -url
@@ -311,8 +311,13 @@ sub import() {
 	    *{$caller.'::'.$method} = \*{$method};
 	}
     }
+
+    if( $arg->{-prefetching} and $arg->{-larbin} ){
+	die "-prefetching and -larbin are not supposed to be used together\n";
+    }
+
     if( $arg->{-prefetching} ){
-	$USE_PREFETCHING = 1;
+	$USE_PREFETCHING = 'FEAR';
 	# Start prefetching server here.
 	my $prefetching_server_pid = fork();
 	if( ! $prefetching_server_pid ) {
@@ -321,6 +326,9 @@ sub import() {
 	    FEAR::API::Prefetching::Server::start_server();
 	    exit;
 	}
+    }
+    if( $arg->{-larbin} ){
+	$USE_PREFETCHING = 'LARBIN';
     }
 
     if(caller(0)->isa('FEAR::API') and ref $_ ne 'FEAR::API'){
@@ -697,8 +705,11 @@ sub new()  {
 sub fear() {
     my $f = __PACKAGE__->new(@_);
 
-    if($USE_PREFETCHING){
+    if($USE_PREFETCHING eq 'FEAR'){
 	$f->{prefetcher} = FEAR::API::Prefetching->new();
+    }
+    elsif($USE_PREFETCHING eq 'LARBIN'){
+	$f->{prefetcher} = FEAR::API::Prefetching->new(type => 'LARBIN');
     }
 
     if(defined wantarray){
@@ -817,6 +828,14 @@ chain_sub fetch {
 	$document_content = $wua->get_content('file://'.$path);
 	$wua->{base} = URI::URL->new($url);
 	$wua->{uri} = URI::URL->new($url, $baseurl);
+	if( $document_content =~ /^(\d+?)\n/so ){
+	    $document_content =~ s/^(\d+?)\n//so;
+	    $wua->{ct} = ($1 ? 'text/xml' : 'text/html');
+	}
+	else {
+	    $wua->{ct} = 'text/html';
+	}
+	$wua->{content} = $document_content;
 	$wua->_extract_links();
     }
     else {
@@ -829,8 +848,8 @@ chain_sub fetch {
 	if(defined $self->{prefetcher}){
 	    $self->{prefetcher}->save_document($url, \$document_content);
 	}
-	&print( "      [",$wua->title,"]",$/) if $wua->title;
     }
+    &print( "      [",$wua->title,"]",$/) if $wua->title;
 
     if( $USE_PREFETCHING ){
 	if( $wua->links() ){
@@ -1507,13 +1526,13 @@ __END__
 
 =head1 NAME
 
-FEAR::API - There's no fear with this elegant site scraper
+FEAR::API - Probably the best scraping framework in the world
 
 =head1 SYNOPSIS
 
- FEAR 
+ FEAR
 
- = ∑( WWW Agent, Data Extractor, Data Munger, (X|HT)ML Parser, ...... , Yucky Overloading )
+ = ∑( WWW Crawler, Data Extractor, Data Munger, (X|HT)ML Parser, ...... , Yucky Overloading )
 
  = ∞
 
@@ -1531,24 +1550,23 @@ such as LWP::UserAgent, WWW::Mechanize, Template::Extract, Encode,
 HTML::Parser, etc. and digests them into a deeper Zen.
 
 However, this module violates probably every single rule of any Perl
-coding standards. Please stop here if you don't want to the yucky
+coding standards. Please stop here if you don't want to see the yucky
 code.
 
 =head1 EXAMPLES
 
     use FEAR::API -base;
 
-
 =head2 Fetch a page and store it in a scalar
 
     fetch("google.com") > my $content;
-    
+
     my $content = fetch("google.com")->document->as_string;
 
 =head2 Fetch a page and print to STDOUT
 
     getprint("google.com");
-   
+
     print fetch("google.com")->document->as_string;
 
     fetch("google.com");
@@ -1608,14 +1626,6 @@ code.
          http://some.site/[% i %]
          [% END %]");
     &$_ while $_;
-
-=head2 Get pages in parallel
-
-    url("google.com")->() >> _self;
-    pfetch(sub{
-               local $_ = shift;
-               print join q/ /, title, current_url, document->size, $/;
-           });
 
 =head2 Deal with links in a web page (I)
 
@@ -1824,12 +1834,31 @@ code.
 
 See also L<XML::RSS::SimpleGen>
 
+=head2 Get pages in parallel
+
+    url("google.com")->() >> _self;
+    pfetch(sub{
+               local $_ = shift;
+               print join q/ /, title, current_url, document->size, $/;
+           });
+
 =head2 Prefetching and document caching
+
+Two options:
+
+=head3 Native perl prefetching based on fork()
 
     use FEAR::API -base, -prefetching;
 
+Simple, and not efficient
+
+=head3 C++ parallel crawling based on pthread
+
+    use FEAR::API -base, -larbin;
+
+Larbin is required. Amazingly fast. See also L<http://larbin.sourceforge.net/index-eng.html>
+
 The default document repository is at /tmp/fear-api/pf. (Non-changeable for now).
-FEAR::API currently uses fork() to do parallel prefetching, which is definitely NOT good for performance. This is expected to change in the future.
 
 =head1 Use FEAR::API in one-liners
 

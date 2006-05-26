@@ -8,7 +8,11 @@ use FEAR::API::Prefetching::Base;
 
 
 sub new {
-    bless {}, shift;
+    my $class = shift;
+    my %arg = @_;
+    bless {
+	   type => $arg{type},
+	  }, $class
 }
 
 
@@ -16,16 +20,18 @@ sub has {
     my $self = shift;
     my $url = shift;
     my $path = document_path($url);
-    return -e $path and time - (stat($path))[9] < 60*60;
+    return -e $path and (time - (stat($path))[9] < 60*60);
 }
 
 sub load_document {
     my $self = shift;
     my $url = shift;
     my $path = document_path($url);
-    open my $f, '<', $path or die $!;
-    local $/;
-    return <$f>;
+    if( -e $path ){
+	open my $f, '<', $path or die $!;
+	local $/;
+	return <$f>;
+    }
 }
 
 sub save_document {
@@ -44,15 +50,28 @@ sub fetch {
     my $ua = LWP::UserAgent->new();
     my $socket = IO::Socket::INET->new(
 				       PeerAddr => '127.0.0.1',
-				       PeerPort => '20203',
+				       PeerPort => (
+						    $self->{type} eq 'LARBIN' ?
+						    1976 : 20203
+						   ),
 				       Proto => 'tcp') or die $!;
+    if($self->{type} eq 'LARBIN'){
+	$socket->print("priority:1 depth:1 test:1\n");
+    }
+
     while (my $link = shift @links){
 	my $referer = $link->referer;
 	my $link_digest = digest($link->url);
- 	print "    ... Try prefetching   ", $link->url,$/;
- 	print "         ", digest($link->url),$/;
-	$socket->print($link->url, qq(\t), $link->referer, "\n");
+# 	print "    ... Try prefetching   ", $link->url,$/;
+# 	print "         ", digest($link->url),$/;
+	if($self->{type} eq 'LARBIN'){
+	    $socket->print($link->url()."\n");
+	}
+	else {
+	    $socket->print($link->url, qq(\t), $link->referer, "\n");
+	}
     }
+
     $socket->close();
 
 }

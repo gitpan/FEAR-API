@@ -1,8 +1,6 @@
 package FEAR::API::Prefetching::Server;
 
 use strict;
-use File::Spec::Functions;
-use File::Path;
 use LWP::UserAgent;
 use Net::Server::PreFork;
 use FEAR::API::Agent;
@@ -15,16 +13,6 @@ our @ISA = qw(
 use Exporter::Lite;
 our @EXPORT = qw(start_server);
 
-############################################
-# Initiate document repository
-############################################
-mkpath([ repos_path() ], 0, 0777);
-foreach my $a (0..9, 'a'..'f'){
-    mkdir catfile(repos_path(), $a);
-    foreach my $b (0..9, 'a'..'f'){
-	mkdir catfile(repos_path(), $a, $b);
-    }
-}
 
 
 use Parallel::ForkManager;

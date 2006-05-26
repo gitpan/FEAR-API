@@ -14,6 +14,13 @@ inc/Module/Install/Metadata.pm
 inc/Module/Install/Scripts.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
+larbin/larbin.conf
+larbin/options.h
+larbin/README
+larbin/src/interf/defaultuseroutput.cc
+larbin/src/larbin.make
+larbin/src/utils/MD5.cc
+larbin/src/utils/MD5.h
 lib/FEAR/API.pm
 lib/FEAR/API/Agent.pm
 lib/FEAR/API/ChksumRepos.pm
