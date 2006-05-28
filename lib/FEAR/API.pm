@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.487';
+our $VERSION = '0.487.1';
 
 use utf8;
 our @EXPORT
@@ -1526,7 +1526,7 @@ __END__
 
 =head1 NAME
 
-FEAR::API - Probably the best scraping framework in the world
+FEAR::API - Web Scraping Zen
 
 =head1 SYNOPSIS
 
@@ -1538,7 +1538,7 @@ FEAR::API - Probably the best scraping framework in the world
 
  = ☯
 
-
+ = 禪
 
 =head1 DESCRIPTION
 
@@ -1553,17 +1553,71 @@ However, this module violates probably every single rule of any Perl
 coding standards. Please stop here if you don't want to see the yucky
 code.
 
-=head1 EXAMPLES
+This module was originated from a short-term project. I was asked to extract data from several commercial websites. During my development, I found many redundancies of code, and I attempted to reduce the code size and to create something that is specialized to do this job: Site Scraping. (Or Web Scraping, Screen Scraping). Before creating this module, I have surveyed some site scrapers or information extraction tools, and none of them could really satisfy my needs. I meditated on what the my ideal tool should be shaped like, and the ideas gradually got solidified in my mind.
+
+Then I created FEAR::API.
+
+It is a highly specialized module with a domain-specific syntax. Maybe you are used to creating browser emulator using WWW::Mechanize, but you need to write some extra code to parse the content. Sometimes, after you have extracted data from documents, you also need to write some extra code to store them into databases or plain text files. It may be very easy for you, but is not always done quickly. That's why FEAR::API is here. FEAR::API encapsulates necessary components in any site scraping flow, trying to help you speed up the whole process.
+
+=head1 THE FIVE ELEMENTS
+
+There are 5 essential elements in this module.
+
+ FEAR::API::Agent
+ FEAR::API::Document
+ FEAR::API::Extract
+ FEAR::API::Filter
+ FEAR::API
+
+FEAR::API::Agent is the crawler component. It fetches web pages, and passes contents to FEAR::API::Document.
+
+FEAR::API::Document stores fetched documents.
+
+FEAR::API::Extract performs data extraction on documents.
+
+FEAR::API::Filter does pre-processing on documents and post-processing on extracted results. This component let you clean up fetched pages and refine extracted results.
+
+FEAR::API is the public interface, and everything is handled and coordinated internally in it. Generally, you interact only with this package, and it is supposed to solve most of your problems.
+
+The architecture is not complicated. I guess, the most bewildering thing may be the over-simplified syntax. According to some users who have already tried some of the example codes, they still have completely no idea about what's really going on with this module.
+
+After having done parallel prefetching based on Larbin, I decided to start my documentation. (And I started to regret a little bit that I created this module.)
+
+
+=head1 USAGE
+
+=head2 The first line
 
     use FEAR::API -base;
 
-=head2 Fetch a page and store it in a scalar
+To -base, or not to -base. That is no question.
+
+Using FEAR::API with -base means your current package is a subclass of FEAR::API, and $_ is auto-initiated as a FEAR::API object.
+
+Using it without -base is like using any other OO Perl modules. You need to do instantiation by yourself, and specify the object with each method call.
+
+    use strict;
+    use FEAR::API;
+    my $f = fear();
+    $f->url("blah");
+    # blah, blah, blah.....
+
+=head2 Fetch a page
+
+    url("google.com");
+    fetch();
+
+FEAR::API maintains a URL queue in itself. Everytime you call B<url()>, it pushes your arguments to the queue, and when you call B<fetch()>, the URL at the front will be poped and be requested. If the request is successful, the fetched document will be stored in FEAR::API::Document.
+
+B<fetch()> not only pops the top element in the queue, but also takes arguments. If you pass a URL to B<fetch()>, FEAR::API will fetch the one you specify, and ignore the URL quque temporarily.
+
+=head3 Fetch a page and store it in a scalar
 
     fetch("google.com") > my $content;
 
     my $content = fetch("google.com")->document->as_string;
 
-=head2 Fetch a page and print to STDOUT
+=head3 Fetch a page and print to STDOUT
 
     getprint("google.com");
 
@@ -1575,7 +1629,7 @@ code.
     fetch("google.com") | _print;
 
 
-=head2 Fetch a page and save it to a file
+=head3 Fetch a page and save it to a file
 
     getstore("google.com", 'google.html');
 
@@ -1583,64 +1637,21 @@ code.
     
     fetch("google.com") | io('google.html');
 
-=head2 Follow links in Google's homepage
+=head2 Dispatch Links
 
-    url("google.com")->() >> _self;
-    &$_ while $_;
+=head3 Deal with links in a web page (I)
 
-=head2 Save links in Google's homepage
+Once you have a page fetched, you will probably need to process the links in this page. FEAR::API provides a method B<dispatch_links()> (or B<report_links()>) designed to do this job.
 
-    url("google.com")->() >> _self | _save_as_tree("./root");
-    $_->() | _save_as_tree("./root") while $_;
+B<dispatch_links()> takes a list of pairs of (regular expression => action). For each link in the page, if it matches a certain regular expression (or, say rule), then the action will be taken.
 
+You can also set B<fallthrough_report(1)> to test all the rules.
 
-=head2 Recursively get web pages from Google
+>> is overloaded. It is equivalent to method B<dispatch_links()> or B<report_links()>. B<fallthrough_report()> is automatically set to 1 if >> is followed by an array ref [], and 0 if >> is followed by an hash ref {}.
 
-    url("google.com");
-    &$_ >> _self while $_;
+In the following code examples, a constant B<_self> is used with rules, which means links that matches rules will be all pushed back to the URL queue.
 
-=head2 Recursively get web pages from Google
-
-    url("google.com");
-    &$_ >> _self | _save_as_tree("./root") while $_;
-
-=head2 Follow the second link of Google
-
-    url("google.com")->()->follow_link(n => 2);
-
-=head2 Return links from Google's homepage
-
-    print Dumper fetch("google.com")->links;
-
-=head2 Submit a query to Google
-
-    url("google.com")->();
-    submit_form(
-                form_number => 1,
-                fields => { q => "Kill Bush" }
-                );
-
-=head2 Get links of some pattern
-
-    url("[% FOREACH i = ['a'..'z'] %]
-         http://some.site/[% i %]
-         [% END %]");
-    &$_ while $_;
-
-=head2 Deal with links in a web page (I)
-
-=head3 Minimal
-
-    url("google.com")->()
-      >> [
-          qr(^http:) => _self,
-          qr(google) => \my @l,
-          qr(google) => sub {  print ">>>".$_[0]->[0],$/ }
-         ];
-    $_->() while $_;
-    print Dumper \@l;
-
-=head3 Verbose
+=head4 Verbose
 
     fetch("http://google.com")
     ->report_links(
@@ -1651,20 +1662,25 @@ code.
     fetch while has_more_urls;
     print Dumper \@l;
 
-=head2 Deal with links in a web page (II)
-
-=head3 Minimal
+=head4 Minimal
 
     url("google.com")->()
-      >> {
+      >> [
           qr(^http:) => _self,
           qr(google) => \my @l,
           qr(google) => sub {  print ">>>".$_[0]->[0],$/ }
-         };
+         ];
     $_->() while $_;
     print Dumper \@l;
 
-=head3 Verbose
+
+=head4 Equivalent Code
+
+    url("tw.yahoo.com")->();    my @l;    foreach my $link (links){       $link->[0] =~ /^http:/ and url($link) and next;       $link->[0] =~ /tw.yahoo/ and push @l, $link and next;       $link->[0] =~ /tw.yahoo/ and print ">>>".$link->[0],$/ and next;    }    fetch while has_more_links;    print Dumper \@l;
+
+=head3 Deal with links in a web page (II)
+
+=head4 Verbose
 
     fetch("http://google.com")
     ->fallthrough_report(1)
@@ -1676,7 +1692,81 @@ code.
     fetch while has_more_urls;
     print Dumper \@l;
 
+=head4 Minimal
+
+    url("google.com")->()
+      >> {
+          qr(^http:) => _self,
+          qr(google) => \my @l,
+          qr(google) => sub {  print ">>>".$_[0]->[0],$/ }
+         };
+    $_->() while $_;
+    print Dumper \@l;
+
+=head4 Equivalent Code
+
+    url("tw.yahoo.com")->();    my @l;    foreach my $link (links){       $link->[0] =~ /^http:/ and url($link);       $link->[0] =~ /tw.yahoo/ and push @l, $link;       $link->[0] =~ /tw.yahoo/ and print ">>>".$link->[0],$/;    }    fetch while has_more_links;    print Dumper \@l;
+
+=head3 Follow links in Google's homepage
+
+    url("google.com")->() >> _self;
+    &$_ while $_;
+
+=head3 Save links in Google's homepage
+
+    url("google.com")->() >> _self | _save_as_tree("./root");
+    $_->() | _save_as_tree("./root") while $_;
+
+
+=head3 Recursively get web pages from Google
+
+    url("google.com");
+    &$_ >> _self while $_;
+
+In English, line 1 sets the initial URL. Line 2 says, while there are more links in the queue, FEAR::API will continue fetching and feeding back the links to itself.
+
+=head3 Recursively get web pages from Google
+
+    url("google.com");
+    &$_ >> _self | _save_as_tree("./root") while $_;
+
+In English, line 1 sets the initial URL. Line 2 says, while there are more links in the queue, FEAR::API will continue fetching and feeding back the links to itself, and saving the current document in a tree structure with its root called "root" on file system. And guess what? It is the minimal web spider written in Perl. (Well, at least, I am not aware of any other pure perl implementation.)
+
+=head2 Mechanize fans?
+
+FEAR::API borrows (or, steals) some useful methods from WWW::Mechanize.
+
+=head3 Follow the second link of Google
+
+    url("google.com")->()->follow_link(n => 2);
+
+=head3 Return links from Google's homepage
+
+    print Dumper fetch("google.com")->links;
+
+=head3 Submit a query to Google
+
+    url("google.com")->();
+    submit_form(
+                form_number => 1,
+                fields => { q => "Kill Bush" }
+                );
+
+=head2 Get links of some pattern
+
+If you have used B<curl> before, then you may have tried to embed multiple URLs in one line. FEAR::API gives a similar functionality based on Template Toolkit.
+In the following code, the initial ones are http://some.site/a, http://some.site/b, ......, http://some.site/z
+
+    url("[% FOREACH i = ['a'..'z'] %]
+         http://some.site/[% i %]
+         [% END %]");
+    &$_ while $_;
+
 =head2 Extraction
+
+Use B<template()> to set up the template for extraction. Note that FEAR::API will add B<[% FOREACH rec %]> and B<[% END %]> to your template if your extraction method is set to L<Template::Extract>.
+
+B<preproc()> (or B<doc_filter()>) can help you clean up document before you apply your template. B<postproc()> (or B<result_filter()>) is called after you perform extraction. The argument can be of two types. You can insert a string containing Perl code which will be evaluated, or you can use named filters. They are documented in L<FEAR::API::Filters>.
 
 =head3 Extract data from CPAN
 
@@ -1686,7 +1776,7 @@ code.
             fields => {
                        query => "perl"
                       });
-    template("<!--item-->[% p %]<!--end item-->");
+    template("<!--item-->[% p %]<!--end item-->"); # [% FOREACH rec %]<!--item-->[% p %]<!--end item-->[% END %], actually.
     extract;
     print Dumper extresult;
 
@@ -1698,6 +1788,7 @@ code.
             fields => {
                        query => "perl"
                       });
+    # Only the section between <!--results--> and <!--end results--> is wanted.
     preproc(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s));
     print document->as_string;    # print content to STDOUT
     template("<!--item-->[% p %]<!--end item-->");
@@ -1713,10 +1804,9 @@ code.
                        query => "perl"
                       });
     preproc(q(s/\A.+<!--results-->(.+)<!--end results-->.+\Z/$1/s));
-    print $$_;    # print content to STDOUT
     template("<!--item-->[% rec %]<!--end item-->");
     extract;
-    postproc(q($_->{rec} =~ s/<.+?>//g));     # Strip HTML tags
+    postproc(q($_->{rec} =~ s/<.+?>//g));     # Strip HTML tags brutally
     print Dumper extresult;
 
 
@@ -1733,7 +1823,14 @@ code.
        | _result_filter(q($_->{rec} =~ s/<.+?>//g));
     print Dumper \@$_;
 
+
+This is like doing piping in shell. Site scraping is actually just a flow of data. It is a process turning data into information. People usually pipe B<sort>, B<wc>, B<uniq>, B<head>, ... , etc. in shell to extract the thing they need. In FEAR::API, site scraping is equivalent to data munging. Every piece of information goes through multiple filters before the wanted information really comes out.
+
+
 =head3 Invoke handler for extracted results
+
+When you have results extracted, you can write handlers to process the data.
+B<invoke_handler()> can takes arguments like "Data::Dumper", "YAML", a subref, an object-relational mapper, etc. And argument types are expected to grow.
 
     fetch("http://search.cpan.org/recent");
     submit_form(
@@ -1746,23 +1843,19 @@ code.
        | _result_filter(q($_->{rec} =~ s/<.+?>//g));
     invoke_handler('Data::Dumper');
 
+=head2 Named Filters
 
-=head2 Forward extracted data to relational database
+Here are examples of using named filters provided by FEAR::API itself.
 
-    template($template);
-    extract;
-    invoke_handler('Some::Module::based::on::Class::DBI');
-    # or
-    invoke_handler('Some::Module::based::on::DBIx::Class::CDBICompat');
+=head3 Preprocess document
 
-=head2 Preprocess document
 
     url("google.com")->()
     | _preproc(use => "html_to_null")
     | _preproc(use => "decode_entities")
     | _print;
 
-=head2 Postprocess extraction results
+=head3 Postprocess extraction results
 
     fetch("http://search.cpan.org/recent");
     submit_form(
@@ -1776,21 +1869,41 @@ code.
        | _result_filter(use => "decode_entities", qw(rec))
     print Dumper \@$_;
 
+
+=head2 ORMs
+
+FEAR::API makes it very easy to transfer your extracted data straight to databases. All you need to do is set up an ORM, and invoke the mapper once you have new results extracted. (Though I still think it's not quick enough. It's better not to create any ORMs. FEAR::API should secretly build them for you.)
+
+    template($template);
+    extract;
+    invoke_handler('Some::Module::based::on::Class::DBI');
+    # or
+    invoke_handler('Some::Module::based::on::DBIx::Class::CDBICompat');
+
 =head2 Scraping a file
 
-    file('some_file');
+It is possible to use FEAR::API to extract data from local files. It implies you can use other web crawlers to fetch web pages and use FEAR::API to do scraping jobs.
+
+    file('somse_file');
 
     url('file:///the/path/to/your/file');
 
-=head2 Convert HTML to XHTML
+Then you need to tell FEAR::API what the content type is because the document is loaded from your local file system. Generally, FEAR::API assumes files to be plain text.
 
+    force_content_type('text/html');
+
+=head2 THE XXX FILES
+
+FEAR::API empowers you to select sub-documents using XPath. If your document is not in XML, you have to upgrade it first.
+
+=head3 Upgrade HTML to XHTML
 
     print fetch("google.com")->document->html_to_xhtml->as_string;
 
     fetch("google.com") | _to_xhtml;
     print $$_;
 
-=head2 Select content of interest using XPath
+=head3 Do XPathing
 
     print fetch("google.com")->document->html_to_xhtml->xpath('/html/body/*/form')->as_string;
 
@@ -1799,15 +1912,22 @@ code.
 
 =head2 Make your site scraping script a subroutine
 
-    # sst is for site scraping template;
+It is possible to destruct your scripts or modules into several different components using SST (Site Scraping Template). 
+
     load_sst('fetch("google.com") >> _self; $_->() while $_');
     run_sst;
 
     load_sst('fetch("[% initial_link %]") >> _self; $_->() while $_');
     run_sst({ initial_link => 'google.com'});
 
+    # Load from a file
+    load_sst_file("MY_SST");
+    run_sst({ initial_link => 'google.com'});
 
 =head2 Tabbed scraping
+
+I don't really know what this is good for. I added this because I saw some scraper could do this fancy stuff.
+
 
     fetch("google.com");        # Default tab is 0
     tab 1;                             # Create a new tab, and switch to it.
@@ -1819,7 +1939,9 @@ code.
     keep_tab 1;                    # Keep tab 1 only and close others
     close_tab 1;                    # Close tab 1
 
-=head2 Create RSS file
+=head2 RSS
+
+You can create RSS feeds easily with FEAR::API.
 
     use FEAR::API -base, -rss;
     my $url = "http://google.com";
@@ -1834,7 +1956,11 @@ code.
 
 See also L<XML::RSS::SimpleGen>
 
-=head2 Get pages in parallel
+=head2 Parallel Fetching
+
+=head3 Primitive type
+
+FEAR::API provides a method B<pfetch()>. It can do parallel fetching, but I don't really know whether it's safe to use it or not. This is actually going to be replaced by the novel prefetching mechanism.
 
     url("google.com")->() >> _self;
     pfetch(sub{
@@ -1842,35 +1968,41 @@ See also L<XML::RSS::SimpleGen>
                print join q/ /, title, current_url, document->size, $/;
            });
 
-=head2 Prefetching and document caching
+=head3 Prefetching and document caching
 
-Two options:
+Here I have designed two options for doing prefetching and document caching. One is purely written in Perl, and the other is a C++ web crawling engine. The perl solution is simple, easy-to-install, but not really efficient I think. The C++ crawler is extremely fast. It claims that it fetches 100 million pages on a home PC, with a good network. However, the C++ crawler is much more complex than the simple pure-perl prefetching.
 
-=head3 Native perl prefetching based on fork()
+=head4 Native perl prefetching based on fork()
 
     use FEAR::API -base, -prefetching;
 
 Simple, and not efficient
 
-=head3 C++ parallel crawling based on pthread
+=head4 C++ parallel crawling based on pthread
 
     use FEAR::API -base, -larbin;
 
-Larbin is required. Amazingly fast. See also L<http://larbin.sourceforge.net/index-eng.html>
+Larbin is required. Amazingly fast. See also L<http://larbin.sourceforge.net/index-eng.html> and I<larbin/README>.
 
-The default document repository is at /tmp/fear-api/pf. (Non-changeable for now).
+The default document repository is at I</tmp/fear-api/pf>. (Non-changeable for now).
 
-=head1 Use FEAR::API in one-liners
-
+=head1 ONE-LINERS
 
     fearperl -e 'fetch("google.com")'
 
     perl -M'FEAR::API -base' -e 'fetch("google.com")'
 
+
 =head1 DEBATE
 
 This module has been heavily criticized on Perlmonks.
 Please go to L<http://perlmonks.org/?node_id=537504> for details.
+
+=head1 SEE ALSO
+
+L<WWW::Mechanize>, L<LWP::UserAgent>, L<LWP::Simple>, L<perlrequick>, L<perlretut>, L<perlre>, L<perlreref>, L<Regexp::Bind>, L<Template::Extract>, L<Template>, L<IO::All>, L<XML::Parser>, L<XML::XPath>, L<XML::RSS>, L<XML::RSS::SimpleGen>, L<Data::Dumper>, L<YAML>, L<Class::DBI>, L<DBIx::Class>
+
+Larbin L<http://larbin.sourceforge.net/index-eng.html>
 
 
 =head1 AUTHOR & COPYRIGHT

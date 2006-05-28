@@ -185,4 +185,6 @@
 	- Add prefetching framework based on Larbin
           (See also http://larbin.sourceforge.net/index-eng.html)
 
- 
+0.487.1  Sun, 28 May 2006 14:23:32 +0800
+
+	- More detailed documentation of FEAR/API.pm
