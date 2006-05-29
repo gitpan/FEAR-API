@@ -1,7 +1,7 @@
 use inc::Module::Install;
 
 name            ('FEAR-API');
-abstract        ("There's no fear with this elegant site scraper");
+abstract        ("Web Scraping Zen");
 author          ('Yung-chung Lin <xern@cpan.org>');
 version_from    ('lib/FEAR/API.pm');
 license         ('perl');

@@ -336,3 +336,80 @@ sub tokens {
 1;
 
 __END__
+
+=head1 NAME
+
+FEAR::API::Document - Document class for FEAR::API
+
+=head1 DESCRIPTION
+
+This package is used to store documents fetched by FEAR::API::Agent.
+
+=head1 METHODS
+
+=head2 length(), size()
+
+Returns length of document
+
+=head2 as_string()
+
+Stringifies document object.
+
+=head2 digest()
+
+Returns MD5 digests of documents
+
+=head2 is_utf8
+
+Checks if document is encoded in UTF-8
+
+=head2 utf8_on(), utf8_off()
+
+Turns on/off utf8 flag.
+
+=head2 iconv_from()
+
+Tries to convert document to UTF-8 from any encoding
+
+=head2 append()
+
+Appends your input to document object.
+
+=head2 clear()
+
+Clears document object
+
+=head2 try_compress(), try_uncompress()
+
+Tries to compress/uncompress document.
+
+=head2 mime_encode(), mime_decode()
+
+Encode/Decode your document in MIME
+
+=head2 html_to_xhtml()
+
+Upgrades documents to XHTML
+
+=head2 xpath()
+
+Applies XPath to your document
+
+=head2 hpath()
+
+Upgrades documents to XHTML, and applies XPath
+
+=head2 tokens()
+
+Tokenizes documents
+
+=head1 AUTHOR & COPYRIGHT
+
+Copyright (C) 2006 by Yung-chung Lin (a.k.a. xern) <xern@cpan.org>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself
+
+
+=cut
+

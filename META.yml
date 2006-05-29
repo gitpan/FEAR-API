@@ -1,4 +1,4 @@
-abstract: There's no fear with this elegant site scraper
+abstract: Web Scraping Zen
 author: 'Yung-chung Lin <xern@cpan.org>'
 build_requires:
   Test::More: 0
@@ -45,4 +45,4 @@ requires:
   XML::RSS::SimpleGen: 0
   XML::XPath: 0
   YAML: 0
-version: 0.487.1
+version: 0.487.2
