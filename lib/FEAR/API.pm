@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.487.2';
+our $VERSION = '0.487.3';
 
 use utf8;
 our @EXPORT
@@ -1992,6 +1992,10 @@ The default document repository is at I</tmp/fear-api/pf>. (Non-changeable for n
 
     perl -M'FEAR::API -base' -e 'fetch("google.com")'
 
+=head1 ARTICLE
+
+There is also an article about this module.
+Please see L<http://www.perl.com/pub/a/2006/06/01/fear-api.html>.
 
 =head1 DEBATE
 
