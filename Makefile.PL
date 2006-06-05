@@ -10,6 +10,7 @@ requires  ('Compress::Zlib');
 requires  ('DB_File');
 requires  ('Digest::MD5');
 requires  ('Email::Find');
+requires  ('Exporter::Lite');
 requires  ('File::MMagic');
 requires  ('File::Slurp');
 requires  ('File::Temp');

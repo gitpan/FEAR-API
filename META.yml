@@ -17,6 +17,7 @@ requires:
   DB_File: 0
   Digest::MD5: 0
   Email::Find: 0
+  Exporter::Lite: 0
   File::MMagic: 0
   File::Slurp: 0
   File::Temp: 0
@@ -45,4 +46,4 @@ requires:
   XML::RSS::SimpleGen: 0
   XML::XPath: 0
   YAML: 0
-version: 0.487.3
+version: 0.487.4

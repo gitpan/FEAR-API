@@ -196,3 +196,8 @@
 0.487.3  Fri,  2 Jun 2006 13:58:22 +0800
 
 	- Add a link to an article on this module.
+
+0.487.4  Mon,  5 Jun 2006 17:01:56 +0800
+
+	- Add Exporter::Lite dependency
+          (Thanks to Ying-Chieh Liao [ijliao@csie.nctu.edu.tw])
