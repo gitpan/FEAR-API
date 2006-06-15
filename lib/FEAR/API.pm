@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.487.4';
+our $VERSION = '0.487.5';
 
 use utf8;
 our @EXPORT
@@ -2001,6 +2001,10 @@ Please see L<http://www.perl.com/pub/a/2006/06/01/fear-api.html>.
 
 This module has been heavily criticized on Perlmonks.
 Please go to L<http://perlmonks.org/?node_id=537504> for details.
+
+=head1 EXAMPLES
+
+There are some example scrapers available with this module. Please go to B<examples/>.
 
 =head1 SEE ALSO
 

@@ -2,6 +2,12 @@ bin/fear
 bin/fear-recorder
 bin/fearperl
 Changes
+examples/buy-yahoo-tw.pl
+examples/craigslist.pl
+examples/ecost.pl
+examples/freshmeat.pl
+examples/mastermindtoys.pl
+examples/README
 inc/Module/AutoInstall.pm
 inc/Module/Install.pm
 inc/Module/Install/AutoInstall.pm

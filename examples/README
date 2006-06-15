@@ -1,0 +1,17 @@
+This directory contains several example scripts reveavling the power of
+FEAR::API.
+
+buy-yahoo-tw.pl
+  It fetches all product information from http://buy.yahoo.com.tw
+
+craigslist.pl
+  It fetches perl job information from http://www.craigslist.com
+
+ecost.pl
+  It fetches all product information from http://www.ecost.com
+
+freshmeat.pl
+  It fetches the information of a random project from http://freshmeat.net
+
+mastermindtoys.pl
+  It fetches all product information from http://www.mastermindtoys.com

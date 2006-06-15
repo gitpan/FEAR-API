@@ -201,3 +201,8 @@
 
 	- Add Exporter::Lite dependency
           (Thanks to Ying-Chieh Liao [ijliao@csie.nctu.edu.tw])
+
+0.487.5  Thu, 15 Jun 2006 13:09:26 +0800
+
+	- Add some example scrapers
+
