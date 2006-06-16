@@ -206,3 +206,6 @@
 
 	- Add some example scrapers
 
+0.487.6  Fri, 16 Jun 2006 14:19:19 +0800
+
+	- Add the link to FEAR::Web, a web interface based on FEAR::API

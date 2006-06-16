@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.487.5';
+our $VERSION = '0.487.6';
 
 use utf8;
 our @EXPORT
@@ -1676,7 +1676,15 @@ In the following code examples, a constant B<_self> is used with rules, which me
 
 =head4 Equivalent Code
 
-    url("tw.yahoo.com")->();    my @l;    foreach my $link (links){       $link->[0] =~ /^http:/ and url($link) and next;       $link->[0] =~ /tw.yahoo/ and push @l, $link and next;       $link->[0] =~ /tw.yahoo/ and print ">>>".$link->[0],$/ and next;    }    fetch while has_more_links;    print Dumper \@l;
+    url("tw.yahoo.com")->();
+    my @l;
+    foreach my $link (links){
+      $link->[0] =~ /^http:/ and url($link) and next;
+      $link->[0] =~ /tw.yahoo/ and push @l, $link and next;
+      $link->[0] =~ /tw.yahoo/ and print ">>>".$link->[0],$/ and next;
+    }
+    fetch while has_more_links;
+    print Dumper \@l;
 
 =head3 Deal with links in a web page (II)
 
@@ -1705,7 +1713,15 @@ In the following code examples, a constant B<_self> is used with rules, which me
 
 =head4 Equivalent Code
 
-    url("tw.yahoo.com")->();    my @l;    foreach my $link (links){       $link->[0] =~ /^http:/ and url($link);       $link->[0] =~ /tw.yahoo/ and push @l, $link;       $link->[0] =~ /tw.yahoo/ and print ">>>".$link->[0],$/;    }    fetch while has_more_links;    print Dumper \@l;
+    url("tw.yahoo.com")->();
+    my @l;
+    foreach my $link (links){
+      $link->[0] =~ /^http:/ and url($link);
+      $link->[0] =~ /tw.yahoo/ and push @l, $link;
+      $link->[0] =~ /tw.yahoo/ and print ">>>".$link->[0],$/;
+    }
+    fetch while has_more_links;
+    print Dumper \@l;
 
 =head3 Follow links in Google's homepage
 
@@ -2010,7 +2026,9 @@ There are some example scrapers available with this module. Please go to B<examp
 
 L<WWW::Mechanize>, L<LWP::UserAgent>, L<LWP::Simple>, L<perlrequick>, L<perlretut>, L<perlre>, L<perlreref>, L<Regexp::Bind>, L<Template::Extract>, L<Template>, L<IO::All>, L<XML::Parser>, L<XML::XPath>, L<XML::RSS>, L<XML::RSS::SimpleGen>, L<Data::Dumper>, L<YAML>, L<Class::DBI>, L<DBIx::Class>
 
-Larbin L<http://larbin.sourceforge.net/index-eng.html>
+B<Larbin> L<http://larbin.sourceforge.net/index-eng.html>
+
+B<FEAR::Web>, a web interface based on FEAR::API.  L<http://rt.openfoundry.org/Foundry/Project/?Queue=609>  (But it needs much work.)
 
 
 =head1 AUTHOR & COPYRIGHT
