@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.488.1';
+our $VERSION = '0.489';
 
 use utf8;
 our @EXPORT
@@ -410,6 +410,9 @@ _chain max_fetching_count => 0;           # Maximum number of fetching
 _chain auto_append_url => 0;              # Auto-append url to results. Default is Off.
                                          # Call append_url() to append manually.
 
+_field allowed_domains => {};
+_field denied_domains => {};
+
 
 sub output_filehandle {
     $self->{output_filehandle} = $_[0] if $_[0];
@@ -703,6 +706,35 @@ sub getstore {
   $self->save_to_file(shift);
 }
 
+
+sub allow_domains {
+    foreach (@_){
+	$self->{allowed_domains}->{$_} = 1;
+    }
+}
+
+sub deny_domains {
+    foreach (@_){
+	$self->{denied_domains}->{$_} = 1;
+    }
+}
+
+sub url_is_allowed {
+    my $url = shift;
+    my $answer = 1;
+    foreach my $domain (%{$self->{allowed_domains}}){
+	if($url =~ m($domain)){
+	    $answer = 1;
+	}
+    }
+    foreach my $domain (%{$self->{denied_domains}}){
+	if($url =~ m($domain)){
+	    $answer = 0;
+	}
+    }
+    $answer;
+}
+
 chain_sub fetch {
     exit if
 	defined($self->{max_exec_time})
@@ -724,11 +756,19 @@ chain_sub fetch {
     my $referer = $link->referer || $self->value('referer');
 
 
+    if ( $url ) {
+	if ( $self->urlhistory->has($url) ) {
+	    &print( "\n   $url has been visited.\n");
+	    goto FETCH;
+	}
 
-    if( $url and $self->urlhistory->has($url) ){
-      &print( "\n   $url has been visited.\n");
-      goto FETCH;
+	if ( not $self->url_is_allowed($url) ) {
+	    &print("\n   $url is not allowed.\n");
+	    goto FETCH;
+	}
+
     }
+
     if($self->reach_max_fetching_count){
 	$self->document->content(undef);
 	$self->{url} = [];
@@ -1648,6 +1688,14 @@ In English, line 1 sets the initial URL. Line 2 says, while there are more links
     &$_ >> _self | _save_as_tree("./root") while $_;
 
 In English, line 1 sets the initial URL. Line 2 says, while there are more links in the queue, FEAR::API will continue fetching and feeding back the links to itself, and saving the current document in a tree structure with its root called "root" on file system. And guess what? It is the minimal web spider written in Perl. (Well, at least, I am not aware of any other pure perl implementation.)
+
+=head3 Crawling with domain constraints
+
+
+    allow_domains( qr(google),    qr(blahblah) );
+
+    deny_domains( qr(microsoft), qr(bazzbazz) );
+
 
 =head2 Mechanize fans?
 

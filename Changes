@@ -218,3 +218,8 @@
 0.488.1  Mon, 26 Jun 2006 11:09:30 +0800
 
 	- Fix the dependency list in Makefile.PL
+
+0.489  Mon, 26 Jun 2006 15:45:52 +0800
+
+	- Add allow_domains() and deny_domains()
+
