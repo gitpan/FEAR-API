@@ -6,7 +6,7 @@ $|++;
 use strict;
 no warnings 'redefine';
 
-our $VERSION = '0.487.6';
+our $VERSION = '0.488';
 
 use utf8;
 our @EXPORT
@@ -74,9 +74,7 @@ use File::Slurp;
 use File::Spec::Functions qw(catfile splitpath rel2abs);
 use Inline::Files::Virtual;
 use IO::All;
-use IPC::SysV qw(IPC_RMID);
 use List::Util;
-use Parallel::ForkManager;
 use Storable qw(dclone freeze thaw);
 use Switch;
 use Template;
@@ -86,8 +84,6 @@ use URI::Split;
 use URI::WithBase;
 use URI::Escape;
 use YAML;
-sub LOCK_EX() {};
-eval 'use Tie::ShareLite qw( :lock );';
 
 
 #================================================================================
@@ -411,35 +407,9 @@ _chain random_delay => 1;                 # Interval of random delays, in second
 _chain fetch_delay => 1;                  # The mininum delay between fetchings, in seconds
 _chain quiet => 0;                        # Turn on/off warnings
 _chain max_fetching_count => 0;           # Maximum number of fetching
-_chain parallel => 0;                     # Use/Don't use parallel fetching
 _chain auto_append_url => 0;              # Auto-append url to results. Default is Off.
                                          # Call append_url() to append manually.
 
-
-#======================================================================
-# Shared memory
-#======================================================================
-
-my $shared_key = '6666';
-my $shared_handle;
-my %shared_var;
-if($INC{'Tie/ShareLite.pm'}){
-    $shared_handle = tie %shared_var, 'Tie::ShareLite',
-    -key     => $shared_key,
-    -mode    => 0700,
-    -create  => 'yes',
-    -destroy => 'no'
-	or croak("Could not tie to shared memory: $!");
-}
-
-_field shared_handle => $shared_handle;
-_field shared_var => \%shared_var;
-
-if(ref $shared_handle){
-    $shared_handle->lock(LOCK_EX);
-    $shared_var{fetching_count} = 0;
-    $shared_handle->unlock;
-}
 
 sub output_filehandle {
     $self->{output_filehandle} = $_[0] if $_[0];
@@ -448,17 +418,8 @@ sub output_filehandle {
 
 use subs 'print';
 sub print {
-    if(defined $shared_handle and ref $shared_handle){
-	$shared_handle->lock(LOCK_EX);
-    }
-
     select($self->{output_filehandle}) if $self->{output_filehandle};
     CORE::print(@_);
-
-
-    if( defined $shared_handle and ref $shared_handle ){
-	$shared_handle->unlock;
-    }
 };
 
 
@@ -497,26 +458,6 @@ chain_sub handler {
 #	      $result_item
 	    }
 	}
-#	elsif($handler eq 'CSV'){
-#	  my $outputfile = $_[1];
-#	  $self->{handler} = sub {
-#	    my $result_item = shift;
-#	    my @fields;
-#	    if(ref($result_item) eq 'HASH'){
-#	    @fields = values %$result_item;
-#	    }
-#	    elsif(ref($result_item) eq 'ARRAY'){
-#	    }
-#	  };
-#	  my $csv = Text::CSV->new;
-#	  if ($csv->combine(@fields)) {
-#	    my $string = $csv->string;
-#	    print $string, "\n";
-#	  } else {
-#	    my $err = $csv->error_input;
-#	    cluck "combine() failed on argument: ", $err, "\n";
-#	  }
-#	}
 	else{
 	    # If the handler's namespace cannot be seen, then try to load it
 	    my $class = ref($handler) || $handler;
@@ -742,23 +683,7 @@ chain_sub try_compress_document {
 }
 
 sub inc_fetching_count {
-    if($self->{parallel}){
-	if(ref $shared_handle){
-	    $self->shared_handle->lock(LOCK_EX);
-	    if( exists $self->shared_var->{fetching_count} ){
-		$self->{fetching_count} = $self->shared_var->{fetching_count};
-	    }
-	}
-    }
-
     $self->{fetching_count}++;
-
-    if($self->{parallel}){
-	if(ref $shared_handle){
-	    $self->shared_var->{fetching_count} = $self->{fetching_count};
-	    $self->shared_handle->unlock;
-	}
-    }
 }
 
 sub reach_max_fetching_count {
@@ -885,30 +810,6 @@ chain_sub file {
   -e $file ? fetch("file://$file") : croak "$file does not exist";
 }
 
-chain_sub pfetch {
-    my $callback = shift;
-    if(not ref $shared_handle){
-	print("Cannot use Tie::ShareLite.\npfetch() is disabled.\nPlease install Tie::ShareLite to get this work.\n");
-	return;
-    }
-    my $pm = new Parallel::ForkManager($self->max_processes);
-    while (my $link = shift @{$self->{url}}){
-	my $pid = $pm->start and next;
-	{
-	    $self->parallel(1);
-	    $self->fetch($link);
-	    if( ref $callback ){
-		$self->shared_handle->lock(LOCK_EX);
-                local $_ = $self;
-		&$callback();
-		$self->shared_handle->unlock;
-	    }
-	    $self->parallel(0);
-	}
-	$pm->finish;
-    }
-    $pm->wait_all_children;
-}
 
 
 # Sync contents among FEAR::API::Agent and FEAR::API::Document
@@ -1972,19 +1873,7 @@ You can create RSS feeds easily with FEAR::API.
 
 See also L<XML::RSS::SimpleGen>
 
-=head2 Parallel Fetching
-
-=head3 Primitive type
-
-FEAR::API provides a method B<pfetch()>. It can do parallel fetching, but I don't really know whether it's safe to use it or not. This is actually going to be replaced by the novel prefetching mechanism.
-
-    url("google.com")->() >> _self;
-    pfetch(sub{
-               local $_ = shift;
-               print join q/ /, title, current_url, document->size, $/;
-           });
-
-=head3 Prefetching and document caching
+=head2 Prefetching and document caching
 
 Here I have designed two options for doing prefetching and document caching. One is purely written in Perl, and the other is a C++ web crawling engine. The perl solution is simple, easy-to-install, but not really efficient I think. The C++ crawler is extremely fast. It claims that it fetches 100 million pages on a home PC, with a good network. However, the C++ crawler is much more complex than the simple pure-perl prefetching.
 

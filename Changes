@@ -209,3 +209,8 @@
 0.487.6  Fri, 16 Jun 2006 14:19:19 +0800
 
 	- Add the link to FEAR::Web, a web interface based on FEAR::API
+
+0.488  Mon, 26 Jun 2006 11:02:43 +0800
+
+	- Remove pfetch() and its dependencies
+	- Refactor FEAR::API::Extract

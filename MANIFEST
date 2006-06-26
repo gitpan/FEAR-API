@@ -33,6 +33,11 @@ lib/FEAR/API/ChksumRepos.pm
 lib/FEAR/API/Closure.pm
 lib/FEAR/API/Document.pm
 lib/FEAR/API/Extract.pm
+lib/FEAR/API/Extract/Base.pm
+lib/FEAR/API/Extract/Regexp.GlobalBind.pm
+lib/FEAR/API/Extract/Template.Extract.pm
+lib/FEAR/API/Extract/Text.CSV.Array.pm
+lib/FEAR/API/Extract/Text.CSV.pm
 lib/FEAR/API/Filters.pm
 lib/FEAR/API/Link.pm
 lib/FEAR/API/Log.pm
