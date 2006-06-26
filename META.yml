@@ -3,7 +3,7 @@ author: 'Yung-chung Lin <xern@cpan.org>'
 build_requires:
   Test::More: 0
 distribution_type: module
-generated_by: Module::Install version 0.610
+generated_by: Module::Install version 0.61
 license: perl
 name: FEAR-API
 no_index:
@@ -29,11 +29,9 @@ requires:
   HTTP::Recorder: 0
   IO::All: 0
   IO::String: 0
-  IPC::SysV: 0
   Inline: 0
   Inline::Files: 0
   Net::Server: 0
-  Parallel::ForkManager: 0
   Regexp::Bind: 0
   Regexp::Common: 0
   Sort::Versions: 0
@@ -46,4 +44,4 @@ requires:
   XML::RSS::SimpleGen: 0
   XML::XPath: 0
   YAML: 0
-version: 0.488
+version: 0.488.1

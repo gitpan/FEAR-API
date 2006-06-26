@@ -214,3 +214,7 @@
 
 	- Remove pfetch() and its dependencies
 	- Refactor FEAR::API::Extract
+
+0.488.1  Mon, 26 Jun 2006 11:09:30 +0800
+
+	- Fix the dependency list in Makefile.PL
